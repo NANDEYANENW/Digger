@@ -25,9 +25,13 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
         if (!setupEconomy()) {
-            getLogger().severe("&4Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+            if (getServer().getPluginManager().getPlugin("Vault") == null) {
+                getLogger().severe("Vaultプラグインが見つかりません！！");
+            } else {
+                getLogger().severe("Economyサービスプロバイダが見つかりません！！");
+            }
+
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
