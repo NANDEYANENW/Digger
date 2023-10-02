@@ -12,8 +12,11 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 public class Digger extends JavaPlugin implements Listener {
 
     private final Map<UUID,Integer> blockCount = new HashMap<>();
@@ -38,22 +41,53 @@ public class Digger extends JavaPlugin implements Listener {
 
     }
     @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
+    public void onBlockBreak(BlockBreakEvent event, UUID playerUUID) {
         UUID playerID = event.getPlayer().getUniqueId();
-        blockCount.put(playerID,blockCount.getOrDefault(playerID,0)+1);
-
+        blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
         if (Math.random() < 0.02) {
-            economy.depositPlayer(event.getPlayer(),50);
-            event.getPlayer().sendMessage("&350NANNDEを手に入れました");
-
+            economy.depositPlayer(event.getPlayer(), 50);
+            event.getPlayer().sendMessage("§350NANNDEを手に入れました");
         }
-        updateScoreboard();
 
+        updateScoreboard(playerID, playerUUID); // playerID を引数として渡す
     }
 
-    private void updateScoreboard(){
 
+    private void updateScoreboard(UUID playerID, UUID playerUUID) {
+        Objective objective = scoreboard.getObjective("トップ10");
+
+        // すでに存在するエントリーをクリア
+        for (String entry : scoreboard.getEntries()) {
+            scoreboard.resetScores(entry);
+        }
+
+        // ブロックのカウントを降順にソート
+        List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
+                .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+                .collect(Collectors.toList());
+
+        // プレイヤー自身のランキングを取得
+
+         int playerRank = 1;
+        for (Map.Entry<UUID, Integer> entry : sortedList) {
+            if (entry.getKey().equals(playerUUID)) {
+                break;
+            }
+            playerRank++;
+        }
+
+
+        // トップ10のプレイヤーを表示
+        for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
+            Map.Entry<UUID, Integer> entry = sortedList.get(i);
+            String playerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+            int score = entry.getValue();
+            objective.getScore(playerName).setScore(score);
+        }
+
+        // プレイヤー自身のランキングを表示
+        objective.getScore("あなたの順位: " + playerRank + "位").setScore(0);
     }
 
     private boolean setupEconomy() {
