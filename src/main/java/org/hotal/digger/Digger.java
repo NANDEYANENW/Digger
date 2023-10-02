@@ -40,8 +40,9 @@ public class Digger extends JavaPlugin implements Listener {
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
     }
+
     @EventHandler
-    public void onBlockBreak(BlockBreakEvent event, UUID playerUUID) {
+    public void onBlockBreak(BlockBreakEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
@@ -50,11 +51,13 @@ public class Digger extends JavaPlugin implements Listener {
             event.getPlayer().sendMessage("§350NANNDEを手に入れました");
         }
 
-        updateScoreboard(playerID, playerUUID); // playerID を引数として渡す
+        updateScoreboard(playerID); // playerID を引数として渡す
     }
 
 
-    private void updateScoreboard(UUID playerID, UUID playerUUID) {
+
+
+    private void updateScoreboard(UUID playerUUID) {
         Objective objective = scoreboard.getObjective("トップ10");
 
         // すでに存在するエントリーをクリア
