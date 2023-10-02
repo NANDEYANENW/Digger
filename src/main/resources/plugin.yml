@@ -4,6 +4,6 @@ main: org.hotal.digger.Digger
 api-version: '1.20'
 load: STARTUP
 depend:
-  - [Vault]
+  - Vault
 loadbefore:
-  - [Vault]
+  - Vault
