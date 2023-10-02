@@ -14,11 +14,11 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-@SuppressWarnings("UsagesOfObsoleteApi")
-public final class Digger extends JavaPlugin implements Listener {
+public class Digger extends JavaPlugin implements Listener {
 
     private final Map<UUID,Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
+    private Economy economy;
 
     @Override
     public void onEnable() {
@@ -41,6 +41,7 @@ public final class Digger extends JavaPlugin implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID,blockCount.getOrDefault(playerID,0)+1);
+
 
         if (Math.random() < 0.02) {
             economy.depositPlayer(event.getPlayer(),50);
