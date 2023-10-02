@@ -25,14 +25,16 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        // Plugin startup logic
         if (!setupEconomy()) {
-            if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().severe("Vaultプラグインが見つかりません！！");
-            } else {
-                getLogger().severe("Economyサービスプロバイダが見つかりません！！");
-            }
+            getLogger().severe("&4Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
-            getServer().getPluginManager().disablePlugin(this);
+                if (getServer().getPluginManager().getPlugin("Vault") == null) {
+                    getLogger().severe("Vaultプラグインが見つかりません！！");
+                } else {
+                    getLogger().severe("Economyサービスプロバイダが見つかりません！！");
+                }
+                getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
@@ -74,8 +76,7 @@ public class Digger extends JavaPlugin implements Listener {
                 .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
                 .collect(Collectors.toList());
 
-        // プレイヤー自身のランキングを取得
-
+            // プレイヤー自身のランキングを取得
          int playerRank = 1;
         for (Map.Entry<UUID, Integer> entry : sortedList) {
             if (entry.getKey().equals(playerUUID)) {
