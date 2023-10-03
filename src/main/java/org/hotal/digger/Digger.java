@@ -40,12 +40,17 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
        this.getServer().getPluginManager().registerEvents(this,this);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    // スコアボードの初期化
+                    scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                    Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+                    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                }
+            }.runTaskLater(this, 40L); // Run 1 second (20 ticks) after the plugin is enabled
+        }
 
-       //スコアボードの初期化
-        scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                Objective objective = scoreboard.registerNewObjective("トップ10","dummy","あなたの順位");
-                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            }
 
         @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
