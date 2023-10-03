@@ -47,7 +47,7 @@ public class Digger extends JavaPlugin implements Listener {
             public void run() {
                 // スコアボードの初期化
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+                objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
             }
         }.runTaskLater(this, 20L); // Run 1 second (20 ticks) after the plugin is enabled
@@ -81,13 +81,15 @@ public class Digger extends JavaPlugin implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
-        getLogger().info("Block broken by " + event.getPlayer().getName()); //デバッグ用
+
 
         if (Math.random() < 0.02) {
             economy.depositPlayer(event.getPlayer(), 50);
             event.getPlayer().sendMessage("50NANNDEを手に入れました");
         }
         updateScoreboard(playerID); // playerID を引数として渡す
+        event.getPlayer().setScoreboard(scoreboard);
+
     }
 
     private void updateScoreboard(UUID playerUUID) {
@@ -107,7 +109,7 @@ public class Digger extends JavaPlugin implements Listener {
             objective.getScore(playerName).setScore(score);
         }
 
-        getLogger().info("Updating scoreboard for " + Bukkit.getPlayer(playerUUID).getName());
+
 
 // プレイヤー自身のランキングとスコアを表示
         int playerRank = 1;
@@ -118,7 +120,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
             playerRank++;
         }
-        getLogger().info("Updating scoreboard for " + Bukkit.getPlayer(playerUUID).getName());
+
 
 // プレイヤー自身のランキングとスコアを表示
         playerRank = 1;
