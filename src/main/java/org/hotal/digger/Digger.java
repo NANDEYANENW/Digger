@@ -42,10 +42,11 @@ public class Digger extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(this, this);
 
                 // スコアボードの初期化
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
-                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-            }
+        scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+    }
+
 
 
     private boolean setupEconomy() {
