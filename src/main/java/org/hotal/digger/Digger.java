@@ -24,6 +24,8 @@ public class Digger extends JavaPlugin implements Listener {
     private Scoreboard scoreboard;
     private Economy economy;
 
+    private Objective objective;
+
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -40,14 +42,16 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-
+        new BukkitRunnable() {
+            @Override
+            public void run() {
                 // スコアボードの初期化
-        scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+            }
+        }.runTaskLater(this, 20L); // Run 1 second (20 ticks) after the plugin is enabled
     }
-
-
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -69,6 +73,11 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        // スコアボードやobjectiveがnullかどうかを確認
+        if (scoreboard == null || objective == null) {
+            return; // スコアボードやobjectiveがnullなら処理を終了
+        }
+
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
