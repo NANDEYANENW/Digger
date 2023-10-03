@@ -28,7 +28,7 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() {
         // Plugin startup logic
         if (!setupEconomy()) {
-            getLogger().severe("&4Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+            getLogger().severe("Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
                 if (getServer().getPluginManager().getPlugin("Vault") == null) {
                     getLogger().severe("Vaultプラグインが見つかりません！！");
@@ -48,7 +48,7 @@ public class Digger extends JavaPlugin implements Listener {
                     Objective objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
                     objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                 }
-            }.runTaskLater(this, 40L); // Run 1 second (20 ticks) after the plugin is enabled
+            }.runTaskLater(this, 20L); // Run 1 second (20 ticks) after the plugin is enabled
         }
 
 
@@ -97,16 +97,22 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-
+        //Economyサービスのロギング
     private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null ) {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().warning("Vaultプラグインが見つかりませんでした。");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
+            getLogger().warning("Economyサービスプロバイダが登録されていません");
             return false;
         }
         economy = rsp.getProvider();
-        return economy != null;
+        if (economy == null) {
+            getLogger().warning("Economyサービスが見つかりません");
+            return false;
+        }
+        return true;
     }
 }
