@@ -38,12 +38,12 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() {
         // 起動時のVault関係があるかどうか
         if (!setupEconomy()) {
-            getLogger().severe("§7 エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
             if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().severe("§7 エラー：Vaultプラグインが見つかりません！！");
+                getLogger().severe("エラー：Vaultプラグインが見つかりません！！");
             } else {
-                getLogger().severe("§7 エラー：Economyサービスプロバイダが見つかりません！！");
+                getLogger().severe("エラー：Economyサービスプロバイダが見つかりません！！");
             }
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -64,17 +64,17 @@ public class Digger extends JavaPlugin implements Listener {
 
     private boolean setupEconomy() { //Vaultのセットアップ
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().warning("§7 エラー：Vaultプラグインが見つかりませんでした。");
+            getLogger().warning("エラー：Vaultプラグインが見つかりませんでした。");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().warning("§7 エラー:Economyサービスプロバイダが登録されていません");
+            getLogger().warning("エラー:Economyサービスプロバイダが登録されていません");
             return false;
         }
         economy = rsp.getProvider();
         if (economy == null) {
-            getLogger().warning("§7 エラー：Economyサービスが見つかりません");
+            getLogger().warning("エラー：Economyサービスが見つかりません");
             return false;
         }
         return true;
