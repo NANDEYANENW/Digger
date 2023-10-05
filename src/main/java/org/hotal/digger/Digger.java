@@ -124,7 +124,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         // プレイヤー自身のランキングとスコアを表示
         int playerRank = 1;
-        int playerScore = blockCount.getOrDefault(playerUUID, 0);  // Use getOrDefault
+        int playerScore = blockCount.getOrDefault(playerUUID, 0);
         for (Map.Entry<UUID, Integer> entry : sortedList) {
             if (entry.getKey().equals(playerUUID)) {
                 break;
