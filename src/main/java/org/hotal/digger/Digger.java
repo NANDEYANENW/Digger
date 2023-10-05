@@ -36,7 +36,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        // 起動時のVault関係があるかどうか
         if (!setupEconomy()) {
             getLogger().severe("§7 エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
@@ -50,7 +50,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-        new BukkitRunnable() {
+        new BukkitRunnable() { //スコアボードが表示を1秒遅延させる
             @Override
             public void run() {
                 // スコアボードの初期化
@@ -62,7 +62,7 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L);
     }
 
-    private boolean setupEconomy() {
+    private boolean setupEconomy() { //Vaultのセットアップ
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             getLogger().warning("§7 エラー：Vaultプラグインが見つかりませんでした。");
             return false;
@@ -142,7 +142,7 @@ public class Digger extends JavaPlugin implements Listener {
         objective.getScore(rankDisplay).setScore(playerScore);
 
     }
-        @Override
+        @Override //データ保存メソッドここから
         public void onDisable () {
             saveData();
         }
@@ -173,5 +173,5 @@ public class Digger extends JavaPlugin implements Listener {
             } catch (IOException e) {
                 getLogger().severe("Error saving data file: " + e.getMessage());
             }
-        }
+        } //データ保存メソッドここまで
 }
