@@ -38,12 +38,12 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() {
         // Plugin startup logic
         if (!setupEconomy()) {
-            getLogger().severe("Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+            getLogger().severe("§7 エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
             if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().severe("Vaultプラグインが見つかりません！！");
+                getLogger().severe("§7 エラー：Vaultプラグインが見つかりません！！");
             } else {
-                getLogger().severe("Economyサービスプロバイダが見つかりません！！");
+                getLogger().severe("§7 エラー：Economyサービスプロバイダが見つかりません！！");
             }
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -64,17 +64,17 @@ public class Digger extends JavaPlugin implements Listener {
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().warning("Vaultプラグインが見つかりませんでした。");
+            getLogger().warning("§7 エラー：Vaultプラグインが見つかりませんでした。");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().warning("Economyサービスプロバイダが登録されていません");
+            getLogger().warning("§7 エラー:Economyサービスプロバイダが登録されていません");
             return false;
         }
         economy = rsp.getProvider();
         if (economy == null) {
-            getLogger().warning("Economyサービスが見つかりません");
+            getLogger().warning("§7 エラー：Economyサービスが見つかりません");
             return false;
         }
         return true;
@@ -93,7 +93,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         if (Math.random() < 0.02) {
             economy.depositPlayer(event.getPlayer(), 50);
-            event.getPlayer().sendMessage("50NANNDEを手に入れました");
+            event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
         }
         updateScoreboard(playerID); // playerID を引数として渡す
         event.getPlayer().setScoreboard(scoreboard);
@@ -132,10 +132,10 @@ public class Digger extends JavaPlugin implements Listener {
             playerRank++;
         }
 
-// Check if playerRank is valid
+
         if (playerRank > sortedList.size()) {
-            // Handle this case, for example:
-            return; // Skip further processing or display a message
+
+            return;
         }
 
         String rankDisplay = "あなたの順位: " + playerRank + "位";
