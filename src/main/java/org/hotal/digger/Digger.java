@@ -35,9 +35,9 @@ public class Digger extends JavaPlugin implements Listener {
     private FileConfiguration dataConfig;
 
     @Override
-    public void onEnable() {
-        // 起動時のVault関係があるかどうか
-        if (!setupEconomy()) {
+    public void onEnable() { //起動時の初期化処理
+
+        if (!setupEconomy()) { // 起動時のVault関係があるかどうか
             getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
             if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -50,19 +50,19 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-        new BukkitRunnable() { //スコアボードが表示を1秒遅延させる
+        new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
             @Override
             public void run() {
                 // スコアボードの初期化
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
                 objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                loadData(); // この行をBukkitRunnableの中に移動
+                loadData(); // data.ymlの中身を読み込む。
             }
-        }.runTaskLater(this, 20L);
-    }
+        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+    } //起動時の初期化処理ここまで
 
-    private boolean setupEconomy() { //Vaultのセットアップ
+    private boolean setupEconomy() { //Vaultのセットアップ、各種エラー
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             getLogger().warning("エラー：Vaultプラグインが見つかりませんでした。");
             return false;
@@ -91,7 +91,7 @@ public class Digger extends JavaPlugin implements Listener {
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
 
-        if (Math.random() < 0.02) {
+        if (Math.random() < 0.02) { //2%(1.00で100%)。
             economy.depositPlayer(event.getPlayer(), 50);
             event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
         }
@@ -142,15 +142,15 @@ public class Digger extends JavaPlugin implements Listener {
         objective.getScore(rankDisplay).setScore(playerScore);
 
     }
-        @Override //データ保存メソッドここから
-        public void onDisable () {
+        @Override
+        public void onDisable () { //終了処理
             saveData();
         }
 
-        private void loadData () {
-            dataFile = new File(getDataFolder(), "data.yml");
+        private void loadData () { //データ保存メソッド（読み込み）
+            dataFile = new File(getDataFolder(), "player-data.yml");
             if (!dataFile.exists()) {
-                saveResource("data.yml", false);
+                saveResource("player-data.yml", false);
             }
             dataConfig = YamlConfiguration.loadConfiguration(dataFile);
 
@@ -162,16 +162,16 @@ public class Digger extends JavaPlugin implements Listener {
                     blockCount.put(uuid, count);
                 }
             }
-        }
+        } //読み込みメソッドここまで
 
-        private void saveData(){
+        private void saveData(){ //保存メソッドここから
             for (UUID uuid : blockCount.keySet()) {
                 dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
             }
             try {
                 dataConfig.save(dataFile);
             } catch (IOException e) {
-                getLogger().severe("Error saving data file: " + e.getMessage());
+                getLogger().severe("データファイルの保存中にエラーが発生しました。 " + e.getMessage());
             }
         } //データ保存メソッドここまで
 }
