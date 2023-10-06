@@ -57,7 +57,7 @@ public class Digger extends JavaPlugin implements Listener {
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
                 objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                loadData(); // data.ymlの中身を読み込む。
+                loadData(); // player-data.ymlの中身を読み込む。
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
     } //起動時の初期化処理ここまで
