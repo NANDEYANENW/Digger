@@ -118,6 +118,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
         return false;
+    }
 
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event){
@@ -190,7 +191,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
 
-    }
+
         private void saveData() {
             for (UUID uuid : blockCount.keySet()) {
                 dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
