@@ -9,12 +9,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +22,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.scheduler.BukkitTask;
 
 public class Digger extends JavaPlugin implements Listener {
 
@@ -36,13 +33,6 @@ public class Digger extends JavaPlugin implements Listener {
 
     private File dataFile;
     private FileConfiguration dataConfig;
-
-    private BukkitRunnable scoreboardUpdateTask;
-
-    private final Map<UUID,Integer> blockCount = new HashMap<>();
-    private int updateInterval = 1200; //1分更新
-    private BukkitTask scoreboardUpdateTask;
-
 
     @Override
     public void onEnable() { //起動時の初期化処理
@@ -60,17 +50,17 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-
-
-        startScoreboardUpdater();
-     }//起動時の初期化処理ここまで
-
-    private void startScoreboardUpdater() {
-        if (scoreboardUpdateTask !=null) {
-            scoreboardUpdateTask.cancel();
-        }
-    }
-
+        new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
+            @Override
+            public void run() {
+                // スコアボードの初期化
+                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                loadData(); // player-data.ymlの中身を読み込む。
+            }
+        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+    } //起動時の初期化処理ここまで
 
     private boolean setupEconomy() { //Vaultのセットアップ、各種エラー
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -152,39 +142,36 @@ public class Digger extends JavaPlugin implements Listener {
         objective.getScore(rankDisplay).setScore(playerScore);
 
     }
-        @Override
-        public void onDisable () { //終了処理
-            if (scoreboardUpdateTask != null) {
-                scoreboardUpdateTask.cancel();
-            }
-            saveData();
+    @Override
+    public void onDisable () { //終了処理
+        saveData();
+    }
+
+    private void loadData () { //データ保存メソッド（読み込み）
+        dataFile = new File(getDataFolder(), "player-data.yml");
+        if (!dataFile.exists()) {
+            saveResource("player-data.yml", false);
         }
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
 
-        private void loadData () { //データ保存メソッド（読み込み）
-            dataFile = new File(getDataFolder(), "player-data.yml");
-            if (!dataFile.exists()) {
-                saveResource("player-data.yml", false);
+        if (dataConfig.contains("blockCount")) {
+            blockCount.clear();
+            for (String uuidString : dataConfig.getConfigurationSection("blockCount").getKeys(false)) {
+                UUID uuid = UUID.fromString(uuidString);
+                int count = dataConfig.getInt("blockCount." + uuidString);
+                blockCount.put(uuid, count);
             }
-            dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+        }
+    } //読み込みメソッドここまで
 
-            if (dataConfig.contains("blockCount")) {
-                blockCount.clear();
-                for (String uuidString : dataConfig.getConfigurationSection("blockCount").getKeys(false)) {
-                    UUID uuid = UUID.fromString(uuidString);
-                    int count = dataConfig.getInt("blockCount." + uuidString);
-                    blockCount.put(uuid, count);
-                }
-            }
-        } //読み込みメソッドここまで
-
-        private void saveData(){ //保存メソッドここから
-            for (UUID uuid : blockCount.keySet()) {
-                dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
-            }
-            try {
-                dataConfig.save(dataFile);
-            } catch (IOException e) {
-                getLogger().severe("データファイルの保存中にエラーが発生しました。 " + e.getMessage());
-            }
-        } //データ保存メソッドここまで
+    private void saveData(){ //保存メソッドここから
+        for (UUID uuid : blockCount.keySet()) {
+            dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
+        }
+        try {
+            dataConfig.save(dataFile);
+        } catch (IOException e) {
+            getLogger().severe("データファイルの保存中にエラーが発生しました。 " + e.getMessage());
+        }
+    } //データ保存メソッドここまで
 }
