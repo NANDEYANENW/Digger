@@ -14,7 +14,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 
 public class Digger extends JavaPlugin implements Listener {
 
@@ -33,6 +34,11 @@ public class Digger extends JavaPlugin implements Listener {
 
     private File dataFile;
     private FileConfiguration dataConfig;
+
+    private BukkitRunnable scoreboardUpdateTask;
+
+    private final Map<UUID,Integer> blockCount = new HashMap<>();
+    private int updateInterval = 1200;
 
     @Override
     public void onEnable() { //起動時の初期化処理
@@ -50,17 +56,35 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-        new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
-            @Override
-            public void run() {
-                // スコアボードの初期化
+
+        private void startScoreboardUpdater() {
+            if (scoreboardUpdateTask !=null) {
+                scoreboardUpdateTask.cancel();
+            }
+        }
+        scoreboardUpdateTask = new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
+         @Override
+            public void run() { // スコアボードの初期化
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    updateScoreboard(player.getUniqueId());
+                    player.setScoreboard(scoreboard);
+                }
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
                 objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                 loadData(); // player-data.ymlの中身を読み込む。
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
-    } //起動時の初期化処理ここまで
+
+        startScoreboardUpdater();
+     }//起動時の初期化処理ここまで
+
+    private void startScoreboardUpdater() {
+        if (scoreboardUpdateTask !=null) {
+            scoreboardUpdateTask.cancel();
+        }
+    }
+
 
     private boolean setupEconomy() { //Vaultのセットアップ、各種エラー
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -144,6 +168,9 @@ public class Digger extends JavaPlugin implements Listener {
     }
         @Override
         public void onDisable () { //終了処理
+            if (scoreboardUpdateTask != null) {
+                scoreboardUpdateTask.cancel();
+            }
             saveData();
         }
 
