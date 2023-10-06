@@ -2,6 +2,8 @@ package org.hotal.digger;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,7 +30,7 @@ public class Digger extends JavaPlugin implements Listener {
     private final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
-
+    private long scoreboardUpdateInterval = 1200L;
     private Objective objective;
 
     private File dataFile;
@@ -60,7 +62,44 @@ public class Digger extends JavaPlugin implements Listener {
                 loadData(); // player-data.ymlの中身を読み込む。
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+        startScoreboardUpdater();
     } //起動時の初期化処理ここまで
+
+    private void startScoreboardUpdater() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateAllPlayersScoreboard();
+            }
+        }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
+    }
+
+    private void updateAllPlayersScoreboard() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updateScoreboard(player.getUniqueId());
+            player.setScoreboard(scoreboard);
+        }
+
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("digger")) {
+            if (args.length == 1) {
+                try {
+                    int minutes = Integer.parseInt(args[0].replace("m", ""));
+                    scoreboardUpdateInterval = minutes * 60L * 20L;  // 分をticksに変換
+                    sender.sendMessage("スコアボードの更新間隔を " + minutes + " 分に設定しました。");
+                    return true;
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("無効な時間が指定されました。例：/digger 1m");
+                }
+            } else {
+                sender.sendMessage("使用方法: /digger [時間(分)]");
+            }
+        }
+        return false;
+
 
     private boolean setupEconomy() { //Vaultのセットアップ、各種エラー
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
