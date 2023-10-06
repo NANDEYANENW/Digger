@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -38,7 +39,9 @@ public class Digger extends JavaPlugin implements Listener {
     private BukkitRunnable scoreboardUpdateTask;
 
     private final Map<UUID,Integer> blockCount = new HashMap<>();
-    private int updateInterval = 1200;
+    private int updateInterval = 1200; //1分更新
+    private BukkitTask scoreboardUpdateTask;
+
 
     @Override
     public void onEnable() { //起動時の初期化処理
@@ -62,7 +65,7 @@ public class Digger extends JavaPlugin implements Listener {
                 scoreboardUpdateTask.cancel();
             }
         }
-        scoreboardUpdateTask = new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
+        scoreboardUpdateTask = (BukkitRunnable) new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
          @Override
             public void run() { // スコアボードの初期化
                 for (Player player : Bukkit.getOnlinePlayers()) {
