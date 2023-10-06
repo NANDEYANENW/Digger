@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.scheduler.BukkitTask;
 
 public class Digger extends JavaPlugin implements Listener {
 
@@ -60,24 +61,6 @@ public class Digger extends JavaPlugin implements Listener {
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
-        private void startScoreboardUpdater() {
-            if (scoreboardUpdateTask !=null) {
-                scoreboardUpdateTask.cancel();
-            }
-        }
-        scoreboardUpdateTask = (BukkitRunnable) new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
-         @Override
-            public void run() { // スコアボードの初期化
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    updateScoreboard(player.getUniqueId());
-                    player.setScoreboard(scoreboard);
-                }
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
-                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                loadData(); // player-data.ymlの中身を読み込む。
-            }
-        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
 
         startScoreboardUpdater();
      }//起動時の初期化処理ここまで
