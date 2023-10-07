@@ -7,3 +7,7 @@ depend:
   - Vault
 softdepend:
   - [Vault]
+commands:
+  digger:
+    usage: /digger [時間(分)]
+
