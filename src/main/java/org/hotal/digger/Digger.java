@@ -127,7 +127,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
             UUID playerID = event.getPlayer().getUniqueId();
             blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-            if (Math.random() < 0.02) {
+            if (Math.random() < 0.03) {
                 economy.depositPlayer(event.getPlayer(), 50);
                 event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
             }
