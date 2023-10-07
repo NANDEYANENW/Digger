@@ -2,6 +2,7 @@ package org.hotal.digger;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -9,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -16,11 +18,8 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import org.bukkit.Location;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +34,8 @@ public class Digger extends JavaPlugin implements Listener {
 
     private File dataFile;
     private FileConfiguration dataConfig;
+
+    private final List<Location> placedBlocks = new ArrayList<>();
 
     @Override
     public void onEnable() { //起動時の初期化処理
@@ -121,11 +122,17 @@ public class Digger extends JavaPlugin implements Listener {
         return false;
     }
 
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        placedBlocks.add(event.getBlock().getLocation());
+    }
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event){
+          if (placedBlocks.contains(event.getBlock().getLocation())){
+              placedBlocks.remove(event.getBlock().getLocation());
+          }
         List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
-            event.getPlayer().sendMessage("§aこのブロックは報酬に含まれていません");
             return;
         }
             if (scoreboard == null || objective == null) {
