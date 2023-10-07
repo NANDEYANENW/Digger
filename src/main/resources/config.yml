@@ -8,3 +8,4 @@ block-blacklist:
   - "SAND"
   - "GRAVEL"
   - "SEAGRASS"
+  - "TALL_SEAGRASS"
