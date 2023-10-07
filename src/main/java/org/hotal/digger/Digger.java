@@ -52,12 +52,12 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
-        new BukkitRunnable() { //スコアボードの表示を1秒遅延させる
+        new BukkitRunnable() {
             @Override
             public void run() {
                 // スコアボードの初期化
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                objective = scoreboard.registerNewObjective("トップ10", "dummy", "あなたの順位");
+                objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                 loadData(); // player-data.ymlの中身を読み込む。
             }
@@ -68,17 +68,17 @@ public class Digger extends JavaPlugin implements Listener {
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().warning("エラー：Vaultプラグインが見つかりませんでした。");
+            getLogger().warning("§4エラー：Vaultプラグインが見つかりませんでした。");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().warning("エラー:Economyサービスプロバイダが登録されていません");
+            getLogger().warning("§4エラー:Economyサービスプロバイダが登録されていません");
             return false;
         }
         economy = rsp.getProvider();
         if (economy == null) {
-            getLogger().warning("エラー：Economyサービスが見つかりません");
+            getLogger().warning("§4エラー：Economyサービスが見つかりません");
             return false;
         }
         return true;
@@ -109,13 +109,13 @@ public class Digger extends JavaPlugin implements Listener {
                 try {
                     int minutes = Integer.parseInt(args[0].replace("m", ""));
                     scoreboardUpdateInterval = minutes * 60L * 20L;  // 分をticksに変換
-                    sender.sendMessage("スコアボードの更新間隔を " + minutes + " 分に設定しました。");
+                    sender.sendMessage("§aスコアボードの更新間隔を " + minutes + " 分に設定しました。");
                     return true;
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("無効な時間が指定されました。例：/digger 1m");
+                    sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m");
                 }
             } else {
-                sender.sendMessage("使用方法: /digger [時間(分)]");
+                sender.sendMessage("§3使用方法: /digger [時間(分)]");
             }
         }
         return false;
@@ -123,9 +123,10 @@ public class Digger extends JavaPlugin implements Listener {
 
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event){
-        List<String> blacklist = this.getConfig().getStringList("block-blacklist");
+        List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
-            event.getPlayer().sendMessage("§cこのブロックは報酬に含まれていません");
+            event.getPlayer().sendMessage("§aこのブロックは報酬に含まれていません");
+            return;
         }
             if (scoreboard == null || objective == null) {
                 return;
@@ -150,8 +151,10 @@ public class Digger extends JavaPlugin implements Listener {
                 Map.Entry<UUID, Integer> entry = sortedList.get(i);
                 Player player = Bukkit.getPlayer(entry.getKey());
                 if (player == null) continue;
-                String playerName = player.getName();
+
                 int score = entry.getValue();
+                String playerName = player.getName();
+                String display = playerName + ":" + score;
                 objective.getScore(playerName).setScore(score);
             }
 
@@ -168,7 +171,7 @@ public class Digger extends JavaPlugin implements Listener {
                 return;
             }
 
-            String rankDisplay = "あなたの順位: " + playerRank + "位";
+            String rankDisplay = "§6あなたの順位: " + playerRank + "位";
             objective.getScore(rankDisplay).setScore(playerScore);
         }
 
@@ -204,7 +207,7 @@ public class Digger extends JavaPlugin implements Listener {
             try {
                 dataConfig.save(dataFile);
             } catch (IOException e) {
-                getLogger().severe("データファイルの保存中にエラーが発生しました。 " + e.getMessage());
+                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。 " + e.getMessage());
             }
         }
 }
