@@ -166,15 +166,6 @@ public class Digger extends JavaPlugin implements Listener {
                 .limit(10)
                 .collect(Collectors.toList());
 
-        for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
-            Map.Entry<UUID, Integer> entry = sortedList.get(i);
-            Player listedPlayer = Bukkit.getPlayer(entry.getKey());
-            if (listedPlayer == null) continue;
-            String listedPlayerName = listedPlayer.getName();
-            int score = entry.getValue();
-            individualObjective.getScore(listedPlayerName).setScore(score);
-        }
-
         int playerRank = 1;
         int playerScore = blockCount.getOrDefault(playerUUID, 0);
         for (Map.Entry<UUID, Integer> entry : sortedList) {
@@ -186,11 +177,21 @@ public class Digger extends JavaPlugin implements Listener {
 
         if (playerRank <= 10) {
             String rankDisplay = "§6あなたの順位: " + playerRank + "位";
-            individualObjective.getScore(rankDisplay).setScore(playerScore);
+            individualObjective.getScore(rankDisplay).setScore(-1); // スコアボードの一番下にあなたの順位を表示
+        }
+
+        for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
+            Map.Entry<UUID, Integer> entry = sortedList.get(i);
+            Player listedPlayer = Bukkit.getPlayer(entry.getKey());
+            if (listedPlayer == null) continue;
+            String listedPlayerName = listedPlayer.getName();
+            int score = entry.getValue();
+            individualObjective.getScore(listedPlayerName).setScore(score);
         }
 
         player.setScoreboard(individualScoreboard);
     }
+
 
 
 
