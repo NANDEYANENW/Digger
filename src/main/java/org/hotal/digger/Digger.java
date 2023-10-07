@@ -188,7 +188,6 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         saveData();
-        savePlacedBlocks();
     }
     private void loadData() {
         dataFile = new File(getDataFolder(), "player-data.yml");
