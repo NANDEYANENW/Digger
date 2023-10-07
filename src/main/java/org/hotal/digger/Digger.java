@@ -124,14 +124,16 @@ public class Digger extends JavaPlugin implements Listener {
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event){
         List<String> blacklist = this.getConfig().getStringList("block-blacklist");
-        if (blacklist.contains(event.getBlock().getType().name()))
+        if (blacklist.contains(event.getBlock().getType().name())) {
+            event.getPlayer().sendMessage("§cこのブロックは報酬に含まれていません");
+        }
             if (scoreboard == null || objective == null) {
                 return;
             }
             UUID playerID = event.getPlayer().getUniqueId();
             blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-            if (Math.random() < 0.03) {
-                economy.depositPlayer(event.getPlayer(), 50);
+            if (Math.random() < 0.03) { //3%
+                economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
                 event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
             }
         }
