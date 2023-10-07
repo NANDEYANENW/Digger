@@ -98,11 +98,10 @@ public class Digger extends JavaPlugin implements Listener {
 
     private void updateAllPlayersScoreboard() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            updateScoreboard(player.getUniqueId());
-            player.setScoreboard(scoreboard);
+            updateScoreboard(player);  // Player オブジェクトを直接渡すように変更
         }
-
     }
+
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -148,23 +147,32 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-    private void updateScoreboard(UUID playerUUID) {
-        if (scoreboard == null || objective == null) return;
+    private void updateAllPlayerScoreboard() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updateScoreboard(player);
+        }
+    }
+
+    private void updateScoreboard(Player player) {
+        UUID playerUUID = player.getUniqueId();
+
+        // 各プレイヤーに独自のスコアボードを生成する
+        Scoreboard individualScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective individualObjective = individualScoreboard.registerNewObjective("整地の順位", "dummy", "整地の順位");
+        individualObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
                 .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
-                .limit(11)
+                .limit(10)
                 .collect(Collectors.toList());
 
         for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
             Map.Entry<UUID, Integer> entry = sortedList.get(i);
-            Player player = Bukkit.getPlayer(entry.getKey());
-            if (player == null) continue;
-
+            Player listedPlayer = Bukkit.getPlayer(entry.getKey());
+            if (listedPlayer == null) continue;
+            String listedPlayerName = listedPlayer.getName();
             int score = entry.getValue();
-            String playerName = player.getName();
-            String display = playerName + ":" + score;
-            objective.getScore(playerName).setScore(score);
+            individualObjective.getScore(listedPlayerName).setScore(score);
         }
 
         int playerRank = 1;
@@ -176,18 +184,22 @@ public class Digger extends JavaPlugin implements Listener {
             playerRank++;
         }
 
-        if (playerRank > sortedList.size()) {
-            return;
+        if (playerRank <= 10) {
+            String rankDisplay = "§6あなたの順位: " + playerRank + "位";
+            individualObjective.getScore(rankDisplay).setScore(playerScore);
         }
 
-        String rankDisplay = "§6あなたの順位: " + playerRank + "位";
-        objective.getScore(rankDisplay).setScore(playerScore);
+        player.setScoreboard(individualScoreboard);
     }
 
+
+
     @Override
-    public void onDisable() {
-        saveData();
-    }
+        public void onDisable() {
+            saveData();
+        }
+
+
     private void loadData() {
         dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
