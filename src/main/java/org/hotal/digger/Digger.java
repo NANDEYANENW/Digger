@@ -133,8 +133,7 @@ public class Digger extends JavaPlugin implements Listener {
         if (placedBlocks.contains(event.getBlock().getLocation())) {
             placedBlocks.remove(event.getBlock().getLocation());
         }
-
-        List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
+        List<String> blacklist = this.getConfig().getStringList("block-blacklist");//ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
             return;
         }

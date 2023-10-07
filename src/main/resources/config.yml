@@ -1,4 +1,9 @@
 block-blacklist:
-  -"kelp"
-  -"kelp_plant"
-  -"grass"
+  - "KELP"
+  - "KELP_PLANT"
+  - "GRASS"
+  - "STONE"
+  - "COBBLESTONE"
+  - "DIRT"
+  - "SAND"
+  - "GRAVEL"
