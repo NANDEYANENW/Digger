@@ -7,3 +7,4 @@ block-blacklist:
   - "DIRT"
   - "SAND"
   - "GRAVEL"
+  - "SEAGRASS"
