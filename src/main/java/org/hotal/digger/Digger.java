@@ -3,6 +3,7 @@ package org.hotal.digger;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -126,88 +127,102 @@ public class Digger extends JavaPlugin implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         placedBlocks.add(event.getBlock().getLocation());
     }
-        @EventHandler
-        public void onBlockBreak(BlockBreakEvent event){
-          if (placedBlocks.contains(event.getBlock().getLocation())){
-              placedBlocks.remove(event.getBlock().getLocation());
-          }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (placedBlocks.contains(event.getBlock().getLocation())) {
+            placedBlocks.remove(event.getBlock().getLocation());
+        }
+
         List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
             return;
         }
-            if (scoreboard == null || objective == null) {
-                return;
-            }
-            UUID playerID = event.getPlayer().getUniqueId();
-            blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-            if (Math.random() < 0.03) { //3%
-                economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
-                event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
-            }
+        if (scoreboard == null || objective == null) {
+            return;
+        }
+        UUID playerID = event.getPlayer().getUniqueId();
+        blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
+        if (Math.random() < 0.03) { //3%
+            economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
+            event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
+        }
+    }
+
+    private void updateScoreboard(UUID playerUUID) {
+        if (scoreboard == null || objective == null) return;
+
+        List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
+                .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+                .limit(11)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
+            Map.Entry<UUID, Integer> entry = sortedList.get(i);
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player == null) continue;
+
+            int score = entry.getValue();
+            String playerName = player.getName();
+            String display = playerName + ":" + score;
+            objective.getScore(playerName).setScore(score);
         }
 
-        private void updateScoreboard (UUID playerUUID){
-            if (scoreboard == null || objective == null) return;
-
-            List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
-                    .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
-                    .limit(11)
-                    .collect(Collectors.toList());
-
-            for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
-                Map.Entry<UUID, Integer> entry = sortedList.get(i);
-                Player player = Bukkit.getPlayer(entry.getKey());
-                if (player == null) continue;
-
-                int score = entry.getValue();
-                String playerName = player.getName();
-                String display = playerName + ":" + score;
-                objective.getScore(playerName).setScore(score);
+        int playerRank = 1;
+        int playerScore = blockCount.getOrDefault(playerUUID, 0);
+        for (Map.Entry<UUID, Integer> entry : sortedList) {
+            if (entry.getKey().equals(playerUUID)) {
+                break;
             }
+            playerRank++;
+        }
 
-            int playerRank = 1;
-            int playerScore = blockCount.getOrDefault(playerUUID, 0);
-            for (Map.Entry<UUID, Integer> entry : sortedList) {
-                if (entry.getKey().equals(playerUUID)) {
-                    break;
+        if (playerRank > sortedList.size()) {
+            return;
+        }
+
+        String rankDisplay = "§6あなたの順位: " + playerRank + "位";
+        objective.getScore(rankDisplay).setScore(playerScore);
+    }
+
+    @Override
+    public void onDisable() {
+        saveData();
+        savePlacedBlocks();
+    }
+    private void loadData() {
+        dataFile = new File(getDataFolder(), "player-data.yml");
+        if (!dataFile.exists()) {
+            saveResource("player-data.yml", false);
+        }
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+
+        if (dataConfig.contains("blockCount")) {
+            blockCount.clear();
+            for (String uuidString : dataConfig.getConfigurationSection("blockCount").getKeys(false)) {
+                UUID uuid = UUID.fromString(uuidString);
+                int count = dataConfig.getInt("blockCount." + uuidString);
+                blockCount.put(uuid, count);
+
+                if (dataConfig.contains("placedBlocks")) {
+                    placedBlocks.clear();
+                    for (String blockLocString : dataConfig.getStringList("placedBlocks")) {
+                        placedBlocks.add(stringToLocation(blockLocString));
+                    }
                 }
-                playerRank++;
-            }
-
-            if (playerRank > sortedList.size()) {
-                return;
-            }
-
-            String rankDisplay = "§6あなたの順位: " + playerRank + "位";
-            objective.getScore(rankDisplay).setScore(playerScore);
-        }
-
-        @Override
-        public void onDisable() {
-            saveData();
-        }
-
-
-        private void loadData () {
-            dataFile = new File(getDataFolder(), "player-data.yml");
-            if (!dataFile.exists()) {
-                saveResource("player-data.yml", false);
-            }
-            dataConfig = YamlConfiguration.loadConfiguration(dataFile);
-
-            if (dataConfig.contains("blockCount")) {
-                blockCount.clear();
-                for (String uuidString : dataConfig.getConfigurationSection("blockCount").getKeys(false)) {
-                    UUID uuid = UUID.fromString(uuidString);
-                    int count = dataConfig.getInt("blockCount." + uuidString);
-                    blockCount.put(uuid, count);
-                }
             }
         }
+    }
+    private Location stringToLocation(String s) {
+        String[] parts = s.split(",");
+        World world = Bukkit.getWorld(parts[0]);
+        int x = Integer.parseInt(parts[1]);
+        int y = Integer.parseInt(parts[2]);
+        int z = Integer.parseInt(parts[3]);
+        return new Location(world, x, y, z);
 
-
-
-        private void saveData() {
+    }
+    private void saveData() {
             for (UUID uuid : blockCount.keySet()) {
                 dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
             }
@@ -216,5 +231,15 @@ public class Digger extends JavaPlugin implements Listener {
             } catch (IOException e) {
                 getLogger().severe("§aデータファイルの保存中にエラーが発生しました。 " + e.getMessage());
             }
-        }
+    List<String> blockLocStrings = placedBlocks.stream().map(this::locationToString).collect(Collectors.toList());
+            dataConfig.set("placedBlocks",blockLocStrings);
+            try {
+                dataConfig.save(dataFile);
+            } catch (IOException e) {
+                getLogger().severe("データファイルの保存中にエラーが発生しました。"+ e.getMessage());
+            }
+     }
+     private String locationToString(Location loc){
+        return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
+     }
 }
