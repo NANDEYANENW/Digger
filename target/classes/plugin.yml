@@ -1,0 +1,13 @@
+name: Digger
+version: '1.0'
+main: org.hotal.digger.Digger
+api-version: '1.20'
+load: STARTUP
+depend:
+  - Vault
+softdepend:
+  - [Vault]
+commands:
+  digger:
+    usage: /digger [時間(分)]
+

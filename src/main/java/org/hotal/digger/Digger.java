@@ -63,6 +63,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
+        this.saveDefaultConfig();
     } //起動時の初期化処理ここまで
 
     private boolean setupEconomy() {
@@ -122,6 +123,8 @@ public class Digger extends JavaPlugin implements Listener {
 
         @EventHandler
         public void onBlockBreak(BlockBreakEvent event){
+        List<String> blacklist = this.getConfig().getStringList("block-blacklist");
+        if (blacklist.contains(event.getBlock().getType().name()))
             if (scoreboard == null || objective == null) {
                 return;
             }
