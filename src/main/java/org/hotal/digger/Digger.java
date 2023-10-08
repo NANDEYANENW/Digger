@@ -41,12 +41,12 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() { //起動時の初期化処理
 
         if (!setupEconomy()) { // 起動時のVault関係があるかどうか
-            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。;)");
 
             if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().severe("エラー：Vaultプラグインが見つかりません！！");
+                getLogger().severe("エラー：Vaultプラグインが見つかりません。");
             } else {
-                getLogger().severe("エラー：Economyサービスプロバイダが見つかりません！！");
+                getLogger().severe("エラー：Economyサービスプロバイダが見つかりません。");
             }
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -74,12 +74,12 @@ public class Digger extends JavaPlugin implements Listener {
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().warning("§4エラー:Economyサービスプロバイダが登録されていません");
+            getLogger().warning("§4エラー:Economyサービスプロバイダが登録されていません。");
             return false;
         }
         economy = rsp.getProvider();
         if (economy == null) {
-            getLogger().warning("§4エラー：Economyサービスが見つかりません");
+            getLogger().warning("§4エラー：Economyサービスが見つかりません。");
             return false;
         }
         return true;
@@ -142,7 +142,7 @@ public class Digger extends JavaPlugin implements Listener {
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
         if (Math.random() < 0.03) { //3%
             economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
-            event.getPlayer().sendMessage("§a 50NANNDEを手に入れました");
+            event.getPlayer().sendMessage("§a 50NANNDEを手に入れました。");
         }
     }
 
@@ -246,7 +246,7 @@ public class Digger extends JavaPlugin implements Listener {
             try {
                 dataConfig.save(dataFile);
             } catch (IOException e) {
-                getLogger().severe("データファイルの保存中にエラーが発生しました。"+ e.getMessage());
+                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。"+ e.getMessage());
             }
      }
      private String locationToString(Location loc){
