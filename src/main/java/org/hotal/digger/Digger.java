@@ -105,6 +105,14 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("digger")) {
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    if (!player.hasPermission("digger.minute")) {
+                        player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                        return true;
+                    }
+                }
+        }
             if (args.length == 1) {
                 try {
                     int minutes = Integer.parseInt(args[0].replace("m", ""));
@@ -117,7 +125,7 @@ public class Digger extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage("§3使用方法: /digger [時間(分)]");
             }
-        }
+
         return false;
     }
 

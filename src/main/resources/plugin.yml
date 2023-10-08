@@ -11,3 +11,7 @@ commands:
   digger:
     usage: /digger [時間(分)]
 
+permissions:
+  digger.minute:
+    description: 更新時間を設定します。
+    default: op
