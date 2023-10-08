@@ -161,7 +161,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-        private void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
+    private void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
         Scoreboard individualScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective individualObjective = individualScoreboard.registerNewObjective("トップ10", "dummy", "整地の順位");
         individualObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -171,26 +171,30 @@ public class Digger extends JavaPlugin implements Listener {
                 .limit(10)
                 .collect(Collectors.toList());
 
+        int position = sortedList.size(); // 順位のカウンター
         for (Map.Entry<UUID, Integer> entry : sortedList) {
             Player listedplayer = Bukkit.getPlayer(entry.getKey());
             if (listedplayer == null) continue;
             String listedPlayerName = listedplayer.getName();
-            int score = entry.getValue();  // Use the original score without adding any offset
-            individualObjective.getScore(listedPlayerName).setScore(score);
+            individualObjective.getScore(listedPlayerName).setScore(position); // Use position as the score
+            position--; // Decrease the position counter for the next player
         }
 
-            int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
-            int viewerIndex = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, blockCount.get(viewingPlayerUUID)));
-            int viewerRank = viewerIndex != -1 ? viewerIndex + 1 : -1;  // Determine the rank of the player
+        int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
+        int viewerIndex = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore));
+        int viewerRank = viewerIndex != -1 ? viewerIndex + 1 : -1;
 
-            String rankDisplay;
-            if (viewerRank != -1) {
-                rankDisplay = "§6あなたの順位: " + viewerRank + "位 " + viewerScore;
-            } else {
-                rankDisplay = "§6あなたの順位: --";
-            }
-            individualObjective.getScore(rankDisplay).setScore(0); // Set the score to 0 to keep the "Your rank" display at the bottom
+        String rankDisplay;
+        if (viewerRank != -1) {
+            rankDisplay = "§6あなたの順位: " + viewerRank + "位";
+        } else {
+            rankDisplay = "§6あなたの順位: --";
         }
+        individualObjective.getScore(rankDisplay).setScore(-1); // Set the score to -1
+
+        viewingPlayer.setScoreboard(individualScoreboard);
+    }
+
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
