@@ -41,7 +41,7 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() { //起動時の初期化処理
 
         if (!setupEconomy()) { // 起動時のVault関係があるかどうか
-            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。;)");
+            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
             if (getServer().getPluginManager().getPlugin("Vault") == null) {
                 getLogger().severe("エラー：Vaultプラグインが見つかりません。");
