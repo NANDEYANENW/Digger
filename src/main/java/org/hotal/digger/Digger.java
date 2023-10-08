@@ -12,6 +12,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -56,11 +58,13 @@ public class Digger extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
+
                 // スコアボードの初期化
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
                 objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
                 objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                 loadData(); // player-data.ymlの中身を読み込む。
+
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
@@ -94,13 +98,6 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
     }
-
-    private void updateAllPlayersScoreboard() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            updateScoreboard(player);  // Player オブジェクトを直接渡すように変更
-        }
-    }
-
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -154,18 +151,19 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-    private void updateAllPlayerScoreboard() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            updateScoreboard(player);
+    private void updateAllPlayersScoreboard() {
+        // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
+        for (UUID uuid : blockCount.keySet()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                updateScoreboard(uuid, player);
+            }
         }
     }
 
-    private void updateScoreboard(Player player) {
-        UUID playerUUID = player.getUniqueId();
-
-        // 各プレイヤーに独自のスコアボードを生成する
+        private void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
         Scoreboard individualScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective individualObjective = individualScoreboard.registerNewObjective("整地の順位", "dummy", "整地の順位");
+        Objective individualObjective = individualScoreboard.registerNewObjective("トップ10", "dummy", "整地の順位");
         individualObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
@@ -173,39 +171,40 @@ public class Digger extends JavaPlugin implements Listener {
                 .limit(10)
                 .collect(Collectors.toList());
 
-        int playerRank = 1;
-        int playerScore = blockCount.getOrDefault(playerUUID, 0);
         for (Map.Entry<UUID, Integer> entry : sortedList) {
-            if (entry.getKey().equals(playerUUID)) {
-                break;
-            }
-            playerRank++;
-        }
-
-        if (playerRank <= 10) {
-            String rankDisplay = "§6あなたの順位: " + playerRank + "位";
-            individualObjective.getScore(rankDisplay).setScore(0); // スコアボードの一番下にあなたの順位を表示
-        }
-
-        for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
-            Map.Entry<UUID, Integer> entry = sortedList.get(i);
-            Player listedPlayer = Bukkit.getPlayer(entry.getKey());
-            if (listedPlayer == null) continue;
-            String listedPlayerName = listedPlayer.getName();
-            int score = entry.getValue();
+            Player listedplayer = Bukkit.getPlayer(entry.getKey());
+            if (listedplayer == null) continue;
+            String listedPlayerName = listedplayer.getName();
+            int score = entry.getValue();  // Use the original score without adding any offset
             individualObjective.getScore(listedPlayerName).setScore(score);
         }
 
-        player.setScoreboard(individualScoreboard);
+            int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
+            int viewerIndex = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, blockCount.get(viewingPlayerUUID)));
+            int viewerRank = viewerIndex != -1 ? viewerIndex + 1 : -1;  // Determine the rank of the player
+
+            String rankDisplay;
+            if (viewerRank != -1) {
+                rankDisplay = "§6あなたの順位: " + viewerRank + "位 " + viewerScore;
+            } else {
+                rankDisplay = "§6あなたの順位: --";
+            }
+            individualObjective.getScore(rankDisplay).setScore(0); // Set the score to 0 to keep the "Your rank" display at the bottom
+        }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        saveData();
     }
 
-
-
-
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event){
+        loadData();
+    }
     @Override
-        public void onDisable() {
-            saveData();
-        }
+    public void onDisable() {
+        saveData();
+    }
 
 
     private void loadData() {
@@ -241,23 +240,23 @@ public class Digger extends JavaPlugin implements Listener {
 
     }
     private void saveData() {
-            for (UUID uuid : blockCount.keySet()) {
-                dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
-            }
-            try {
-                dataConfig.save(dataFile);
-            } catch (IOException e) {
-                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。 " + e.getMessage());
-            }
-    List<String> blockLocStrings = placedBlocks.stream().map(this::locationToString).collect(Collectors.toList());
-            dataConfig.set("placedBlocks",blockLocStrings);
-            try {
-                dataConfig.save(dataFile);
-            } catch (IOException e) {
-                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。"+ e.getMessage());
-            }
-     }
-     private String locationToString(Location loc){
+        for (UUID uuid : blockCount.keySet()) {
+            dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
+        }
+        try {
+            dataConfig.save(dataFile);
+        } catch (IOException e) {
+            getLogger().severe("§aデータファイルの保存中にエラーが発生しました。 " + e.getMessage());
+        }
+        List<String> blockLocStrings = placedBlocks.stream().map(this::locationToString).collect(Collectors.toList());
+        dataConfig.set("placedBlocks",blockLocStrings);
+        try {
+            dataConfig.save(dataFile);
+        } catch (IOException e) {
+            getLogger().severe("§aデータファイルの保存中にエラーが発生しました。"+ e.getMessage());
+        }
+    }
+    private String locationToString(Location loc){
         return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
-     }
+    }
 }
