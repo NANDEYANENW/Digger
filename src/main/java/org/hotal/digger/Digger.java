@@ -19,7 +19,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.Location;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.io.File;
