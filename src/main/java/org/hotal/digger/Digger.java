@@ -177,7 +177,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         if (playerRank <= 10) {
             String rankDisplay = "§6あなたの順位: " + playerRank + "位";
-            individualObjective.getScore(rankDisplay).setScore(-1); // スコアボードの一番下にあなたの順位を表示
+            individualObjective.getScore(rankDisplay).setScore(0); // スコアボードの一番下にあなたの順位を表示
         }
 
         for (int i = 0; i < Math.min(10, sortedList.size()); i++) {
