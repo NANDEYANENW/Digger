@@ -171,22 +171,26 @@ public class Digger extends JavaPlugin implements Listener {
                 .limit(10)
                 .collect(Collectors.toList());
 
+        int position = sortedList.size(); // 順位のカウンター
         for (Map.Entry<UUID, Integer> entry : sortedList) {
             Player listedplayer = Bukkit.getPlayer(entry.getKey());
             if (listedplayer == null) continue;
             String listedPlayerName = listedplayer.getName();
-            int score = entry.getValue();
-            if (!entry.getKey().equals(viewingPlayerUUID)) {
-                individualObjective.getScore(listedPlayerName).setScore(score);
-            }
+            individualObjective.getScore(listedPlayerName).setScore(position); // Use position as the score
+            position--; // Decrease the position counter for the next player
         }
 
         int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
-        int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, blockCount.get(viewingPlayerUUID))) + 1;
-        String rankDisplay = "§6あなたの順位: " + viewerRank + "位";
+        int viewerIndex = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore));
+        int viewerRank = viewerIndex != -1 ? viewerIndex + 1 : -1;
 
-        individualObjective.getScore("§6" + viewerScore).setScore(-1);
-        individualObjective.getScore(rankDisplay).setScore(-2);
+        String rankDisplay;
+        if (viewerRank != -1) {
+            rankDisplay = "§6あなたの順位: " + viewerRank + "位";
+        } else {
+            rankDisplay = "§6あなたの順位: --";
+        }
+        individualObjective.getScore(rankDisplay).setScore(-1); // Set the score to -1
 
         viewingPlayer.setScoreboard(individualScoreboard);
     }
