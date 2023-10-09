@@ -5,10 +5,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class updatescoreboard implements CommandExecutor {
+public class DebugCommands implements CommandExecutor {
     private final Digger diggerPlugin;
 
-    public updatescoreboard(Digger diggerPlugin) {
+    public DebugCommands(Digger diggerPlugin) {
         this.diggerPlugin = diggerPlugin;
     }
 
@@ -26,7 +26,7 @@ public class updatescoreboard implements CommandExecutor {
             }
 
             diggerPlugin.updateAllPlayersScoreboard();
-            player.sendMessage("§aスコアボードをアップデートしました。");
+            player.sendMessage("§aスコアボードを即座にアップデートしました。");
             return true;
         }
         return false;
