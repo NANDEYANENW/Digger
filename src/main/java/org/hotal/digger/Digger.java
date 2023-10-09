@@ -187,6 +187,7 @@ public class Digger extends JavaPlugin implements Listener {
         viewingPlayer.setScoreboard(individualScoreboard);
     }
 
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         saveData();
