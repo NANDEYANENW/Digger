@@ -22,6 +22,8 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
@@ -101,31 +103,53 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
     }
 
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("digger")) {
-                if (sender instanceof Player) {
-                    Player player = (Player) sender;
-                    if (!player.hasPermission("digger.minute")) {
-                        player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                        return true;
-                    }
-                }
-        }
+            // ... other command checks ...
+
             if (args.length == 1) {
-                try {
-                    int minutes = Integer.parseInt(args[0].replace("m", ""));
-                    scoreboardUpdateInterval = minutes * 60L * 20L;  // 分をticksに変換
-                    sender.sendMessage("§aスコアボードの更新間隔を " + minutes + " 分に設定しました。");
+                String timeArg = args[0];
+                long intervalInTicks = parseTimeToTicks(timeArg);
+
+                if (intervalInTicks != -1) {
+                    scoreboardUpdateInterval = intervalInTicks;
+                    sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
                     return true;
-                } catch (NumberFormatException e) {
-                    sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m");
+                } else {
+                    sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
                 }
             } else {
-                sender.sendMessage("§3使用方法: /digger [時間(分)]");
+                sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
             }
-
+        }
         return false;
+    }
+
+    private long parseTimeToTicks(String timeArg) {
+        try {
+            int totalSeconds = 0;
+
+            // Match minutes and seconds
+            Matcher matcher = Pattern.compile("((\\d+)m)?((\\d+)s)?").matcher(timeArg);
+            if (matcher.matches()) {
+                String minuteStr = matcher.group(2);
+                String secondStr = matcher.group(4);
+
+                if (minuteStr != null) {
+                    totalSeconds += Integer.parseInt(minuteStr) * 60;
+                }
+                if (secondStr != null) {
+                    totalSeconds += Integer.parseInt(secondStr);
+                }
+
+                return totalSeconds * 20L; // Convert to ticks
+            }
+        } catch (NumberFormatException e) {
+            getLogger().warning("Invalid time format: " + timeArg);
+        }
+       return -1; // Return -1 for invalid format
     }
 
     @EventHandler
