@@ -7,7 +7,7 @@ depend:
   - Vault
 commands:
   digger:
-    usage: /digger [時間(分)]
+    usage: /digger [時間(分と秒)]
   updatescoreboard:
     description: スコアボードをすぐにアップデートします（デバッグ用）。
     usage: /updatescoreboard
