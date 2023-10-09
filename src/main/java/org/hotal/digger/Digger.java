@@ -69,6 +69,8 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
         this.saveDefaultConfig();
+        // デバッグコマンドの登録
+        getCommand("updatescoreboard").setExecutor(new updatescoreboard(this));
     } //起動時の初期化処理ここまで
 
     private boolean setupEconomy() {
@@ -157,7 +159,7 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-    private void updateAllPlayersScoreboard() {
+    public void updateAllPlayersScoreboard() {
         // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
         for (UUID uuid : blockCount.keySet()) {
             Player player = Bukkit.getPlayer(uuid);

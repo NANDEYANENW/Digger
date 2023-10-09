@@ -8,7 +8,13 @@ depend:
 commands:
   digger:
     usage: /digger [時間(分)]
+  updatescoreboard:
+    description: スコアボードをすぐにアップデートします（デバッグ用）。
+    usage: /updatescoreboard
 permissions:
   digger.minute:
     description: 更新時間を設定します。
+    default: op
+  digger.debug:
+    description: スコアボードを即座にアップデートします（デバッグ用）。
     default: op
