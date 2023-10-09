@@ -26,7 +26,7 @@ public class DebugCommands implements CommandExecutor {
             }
 
             diggerPlugin.updateAllPlayersScoreboard();
-            player.sendMessage("§aスコアボードを即座にアップデートしました。");
+            player.sendMessage("§aスコアボードをアップデートしました。");
             return true;
         }
         return false;
