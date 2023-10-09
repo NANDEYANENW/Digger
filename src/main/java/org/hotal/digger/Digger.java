@@ -172,28 +172,20 @@ public class Digger extends JavaPlugin implements Listener {
                 .collect(Collectors.toList());
 
         for (Map.Entry<UUID, Integer> entry : sortedList) {
-            Player listedplayer = Bukkit.getPlayer(entry.getKey());
-            if (listedplayer == null) continue;
-            String listedPlayerName = listedplayer.getName();
+            String listedPlayerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
             int score = entry.getValue();
-            if (!entry.getKey().equals(viewingPlayerUUID)) {
-                individualObjective.getScore(listedPlayerName).setScore(score);
-            }
+            individualObjective.getScore(listedPlayerName).setScore(score);
         }
 
         int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
-        int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, blockCount.get(viewingPlayerUUID))) + 1;
+        int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore)) + 1;
         String rankDisplay = "§6あなたの順位: " + viewerRank + "位";
 
-        individualObjective.getScore("§6" + viewerScore).setScore(-1);
-        individualObjective.getScore(rankDisplay).setScore(-2);
+        individualObjective.getScore(rankDisplay).setScore(-1);
+        individualObjective.getScore("§6" + viewerScore).setScore(-2);
 
         viewingPlayer.setScoreboard(individualScoreboard);
     }
-
-
-
-
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
