@@ -2,11 +2,6 @@ block-blacklist:
   - "KELP"
   - "KELP_PLANT"
   - "GRASS"
-  - "STONE"
-  - "COBBLESTONE"
-  - "DIRT"
-  - "SAND"
-  - "GRAVEL"
   - "SEAGRASS"
   - "TALL_SEAGRASS"
 
