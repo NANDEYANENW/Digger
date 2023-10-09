@@ -70,7 +70,7 @@ public class Digger extends JavaPlugin implements Listener {
         startScoreboardUpdater();
         this.saveDefaultConfig();
         // デバッグコマンドの登録
-        getCommand("updatescoreboard").setExecutor(new updatescoreboard(this));
+        getCommand("updatescoreboard").setExecutor(new DebugCommands(this));
     } //起動時の初期化処理ここまで
 
     private boolean setupEconomy() {
