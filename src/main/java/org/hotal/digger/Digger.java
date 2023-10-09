@@ -133,10 +133,15 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (placedBlocks.contains(event.getBlock().getLocation())) {
-            placedBlocks.remove(event.getBlock().getLocation());
+        Location blockLoc = event.getBlock().getLocation();
+
+        // プレイヤーが設置したブロックを確認
+        if (placedBlocks.contains(blockLoc)) {
+            placedBlocks.remove(blockLoc);
+            return;  // このブロックのランキングや報酬の処理をスキップ
         }
-        List<String> blacklist = this.getConfig().getStringList("block-blacklist");//ブラックリスト機能
+
+        List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
             return;
         }
@@ -145,11 +150,12 @@ public class Digger extends JavaPlugin implements Listener {
         }
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-        if (Math.random() < 0.02) { //2%
+        if (Math.random() < 0.03) { //3%
             economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
             event.getPlayer().sendMessage("§a 50NANNDEを手に入れました。");
         }
     }
+
 
     private void updateAllPlayersScoreboard() {
         // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
