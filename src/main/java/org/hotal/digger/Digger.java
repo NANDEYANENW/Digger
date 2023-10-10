@@ -113,32 +113,33 @@ public class Digger extends JavaPlugin implements Listener {
                     player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                     return true;
                 }
+                if (args.length == 1) {
+                    String timeArg = args[0];
+                    long intervalInTicks = parseTimeToTicks(timeArg);
+                    if (intervalInTicks != -1) {
+                        scoreboardUpdateInterval = intervalInTicks;
+                        sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
+                        return true;
+                    } else {
+                        sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
+                        return true;
+                    }
+                } else {
+                    sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
+                    return true;
+                }
             }
-        }
-        if (cmd.getName().equalsIgnoreCase("updatescoreboard")) {
+        } else if (cmd.getName().equalsIgnoreCase("updatescoreboard")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
                 if (!player.hasPermission("digger.debug")) {
                     player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                     return true;
                 }
+                // このコマンドの具体的な処理をここに追加してください。
             }
         }
-        if (args.length == 1) {
-            String timeArg = args[0];
-            long intervalInTicks = parseTimeToTicks(timeArg);
-
-            if (intervalInTicks != -1) {
-                scoreboardUpdateInterval = intervalInTicks;
-                sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
-                return true;
-            } else {
-                sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
-            }
-        } else {
-            sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
-        }
-       return false;
+        return false;
     }
 
     private long parseTimeToTicks(String timeArg) {
@@ -178,7 +179,7 @@ public class Digger extends JavaPlugin implements Listener {
         // プレイヤーが設置したブロックを確認
         if (placedBlocks.contains(blockLoc)) {
             placedBlocks.remove(blockLoc);
-            return;  // このブロックのランキングや報酬の処理をスキップ
+            return;  // 人為的に置かれたブロックの場合、このブロックのランキングや報酬の処理をスキップ
         }
 
         List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
