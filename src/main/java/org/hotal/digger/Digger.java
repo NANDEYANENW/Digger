@@ -43,7 +43,6 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() { //起動時の初期化処理
-
         if (!setupEconomy()) { // 起動時のVault関係があるかどうか
             getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
@@ -60,7 +59,6 @@ public class Digger extends JavaPlugin implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-
                 // スコアボードの初期化
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
                 objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
@@ -92,8 +90,6 @@ public class Digger extends JavaPlugin implements Listener {
         }
         return true;
     }
-
-
     private void startScoreboardUpdater() {
         new BukkitRunnable() {
             @Override
@@ -102,8 +98,6 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
     }
-
-
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("digger")) {
@@ -136,16 +130,13 @@ public class Digger extends JavaPlugin implements Listener {
                     player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                     return true;
                 }
-                // このコマンドの具体的な処理をここに追加してください。
             }
         }
         return false;
     }
-
     private long parseTimeToTicks(String timeArg) {
         try {
             int totalSeconds = 0;
-
             // Match minutes and seconds
             Matcher matcher = Pattern.compile("^((\\d+)m)?((\\d+)s)?$").matcher(timeArg);
             if (matcher.matches()) {
@@ -166,16 +157,13 @@ public class Digger extends JavaPlugin implements Listener {
         }
        return -1; // Return -1 for invalid format
     }
-
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         placedBlocks.add(event.getBlock().getLocation());
     }
-
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Location blockLoc = event.getBlock().getLocation();
-
         // プレイヤーが設置したブロックを確認
         if (placedBlocks.contains(blockLoc)) {
             placedBlocks.remove(blockLoc);
@@ -207,7 +195,6 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
     }
-
     private void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
         Scoreboard individualScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective individualObjective = individualScoreboard.registerNewObjective("トップ10", "dummy", "整地の順位");
@@ -234,7 +221,6 @@ public class Digger extends JavaPlugin implements Listener {
         viewingPlayer.setScoreboard(individualScoreboard);
     }
 
-
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         saveData();
@@ -248,7 +234,6 @@ public class Digger extends JavaPlugin implements Listener {
     public void onDisable() {
         saveData();
     }
-
 
     private void loadData() {
         dataFile = new File(getDataFolder(), "player-data.yml");
