@@ -107,24 +107,38 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("digger")) {
-            // ... other command checks ...
-
-            if (args.length == 1) {
-                String timeArg = args[0];
-                long intervalInTicks = parseTimeToTicks(timeArg);
-
-                if (intervalInTicks != -1) {
-                    scoreboardUpdateInterval = intervalInTicks;
-                    sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (!player.hasPermission("digger.minute")) {
+                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                     return true;
-                } else {
-                    sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
                 }
-            } else {
-                sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
             }
         }
-        return false;
+        if (cmd.getName().equalsIgnoreCase("updatescoreboard")) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (!player.hasPermission("digger.debug")) {
+                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                    return true;
+                }
+            }
+        }
+        if (args.length == 1) {
+            String timeArg = args[0];
+            long intervalInTicks = parseTimeToTicks(timeArg);
+
+            if (intervalInTicks != -1) {
+                scoreboardUpdateInterval = intervalInTicks;
+                sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
+                return true;
+            } else {
+                sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
+            }
+        } else {
+            sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
+        }
+       return false;
     }
 
     private long parseTimeToTicks(String timeArg) {
@@ -132,7 +146,7 @@ public class Digger extends JavaPlugin implements Listener {
             int totalSeconds = 0;
 
             // Match minutes and seconds
-            Matcher matcher = Pattern.compile("((\\d+)m)?((\\d+)s)?").matcher(timeArg);
+            Matcher matcher = Pattern.compile("^((\\d+)m)?((\\d+)s)?$").matcher(timeArg);
             if (matcher.matches()) {
                 String minuteStr = matcher.group(2);
                 String secondStr = matcher.group(4);
@@ -177,8 +191,8 @@ public class Digger extends JavaPlugin implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
         if (Math.random() < 0.02) { //2%
-            economy.depositPlayer(event.getPlayer(), 50); //50NANNDE 追加
-            event.getPlayer().sendMessage("§a 50NANNDEを手に入れました。");
+            economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
+            event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
         }
     }
 
