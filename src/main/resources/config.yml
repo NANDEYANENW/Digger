@@ -4,4 +4,8 @@ block-blacklist:
   - "GRASS"
   - "SEAGRASS"
   - "TALL_SEAGRASS"
+update-interval: 20
+world-blacklist:
+  - world_nether
+  - world_the_end
 

@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class Digger extends JavaPlugin implements Listener {
-
+    private double rewardProbability = 0.03; //デフォルトは3%
     private final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
@@ -70,7 +70,12 @@ public class Digger extends JavaPlugin implements Listener {
         startScoreboardUpdater();
         this.saveDefaultConfig();
         // デバッグコマンドの登録
-        getCommand("updatescoreboard").setExecutor(new DebugCommands(this));
+        getCommand("updatescoreboard").setExecutor(new Commands(this));
+        getCommand("setprobability").setExecutor(new Commands(this));
+
+        if(this.getConfig().contains("scoreboardUpdateInterval")){
+            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+        }
     } //起動時の初期化処理ここまで
 
     private boolean setupEconomy() {
@@ -100,6 +105,54 @@ public class Digger extends JavaPlugin implements Listener {
     }
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("digger")) {
+            if (args.length == 1) {
+                try {
+                    int minutes = Integer.parseInt(args[0].replace("m", ""));
+                    scoreboardUpdateInterval = minutes * 60L * 20L;
+                    saveUpdateIntervalToConfig(scoreboardUpdateInterval);  // configへの保存を行うメソッドを呼び出す
+                    sender.sendMessage("スコアボードの更新間隔を " + minutes + " 分に設定しました。");
+                    return true;
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("無効な時間が指定されました。例：/digger 1m");
+                }
+            } else {
+                sender.sendMessage("使用方法: /digger [時間(分)]");
+            }
+        }
+        
+        if (cmd.getName().equalsIgnoreCase("setprobability")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
+                return true;
+            }
+
+            Player player = (Player) sender;
+
+            if (!player.hasPermission("digger.setprobability")) {
+                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
+
+            if (args.length == 1) {
+                try {
+                    double newProbability = Double.parseDouble(args[0]);
+                    if (newProbability >= 0.0 && newProbability <= 1.0) {
+                        rewardProbability = newProbability;
+                        sender.sendMessage("確率が " + newProbability + " に設定されました。");
+                        return true;
+                    } else {
+                        sender.sendMessage("エラー: 確率は0.0から1.0の間で指定してください。");
+                    }
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("エラー: 無効な確率が指定されました。");
+                }
+            } else {
+                sender.sendMessage("使用方法: /setprobability <確率>");
+            }
+            return true;
+        }
+
         if (cmd.getName().equalsIgnoreCase("digger")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -134,6 +187,12 @@ public class Digger extends JavaPlugin implements Listener {
         }
         return false;
     }
+
+    private void saveUpdateIntervalToConfig(long interval) {
+        this.getConfig().set("scoreboardUpdateInterval", interval);
+        this.saveConfig();
+    }
+
     private long parseTimeToTicks(String timeArg) {
         try {
             int totalSeconds = 0;

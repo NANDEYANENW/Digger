@@ -9,12 +9,18 @@ commands:
   digger:
     usage: /digger [時間(分と秒)]
   updatescoreboard:
-    description: スコアボードをすぐにアップデートします（デバッグ用）。
+    description: スコアボードをアップデートします（OP用）。
     usage: /updatescoreboard
+  setprobability:
+      description: 確率を変更します（OP用）。
+      usage: /setprobability
 permissions:
   digger.minute:
-    description: 更新時間を設定します。
+    description: 更新時間を設定します。（OP限定）。
     default: op
   digger.debug:
-    description: スコアボードをアップデートします（デバッグ用）。
+    description: スコアボードをアップデートします（OP限定）。
+    default: op
+  digger.setprobability:
+    description: 確率を変更します。（OP限定）。
     default: op

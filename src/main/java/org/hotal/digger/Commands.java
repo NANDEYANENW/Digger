@@ -5,10 +5,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class DebugCommands implements CommandExecutor {
+public class Commands implements CommandExecutor {
     private final Digger diggerPlugin;
 
-    public DebugCommands(Digger diggerPlugin) {
+    public Commands(Digger diggerPlugin) {
         this.diggerPlugin = diggerPlugin;
     }
 
@@ -24,10 +24,22 @@ public class DebugCommands implements CommandExecutor {
                 player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
+            if (command.getName().equalsIgnoreCase("setprobability")) {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
+                    return true;
+                }
+                if (!player.hasPermission("digger.setprobability")) {
+                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                    return true;
+                }
 
-            diggerPlugin.updateAllPlayersScoreboard();
-            player.sendMessage("§aスコアボードをアップデートしました。");
-            return true;
+
+                diggerPlugin.updateAllPlayersScoreboard();
+                player.sendMessage("§aスコアボードをアップデートしました。");
+                return true;
+            }
+            return false;
         }
         return false;
     }
