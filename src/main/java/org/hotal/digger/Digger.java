@@ -29,7 +29,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class Digger extends JavaPlugin implements Listener {
-    private double rewardProbability = 0.03; //デフォルトは3%
+    private static double rewardProbability = 0.02;
+
     private final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
@@ -40,9 +41,14 @@ public class Digger extends JavaPlugin implements Listener {
     private FileConfiguration dataConfig;
 
     private final List<Location> placedBlocks = new ArrayList<>();
+    private List<String> worldBlacklist = new ArrayList<>();
 
     @Override
     public void onEnable() { //起動時の初期化処理
+        saveDefaultConfig();
+        scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
+        worldBlacklist = getConfig().getStringList("world-blacklist");
+
         if (!setupEconomy()) { // 起動時のVault関係があるかどうか
             getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
 
@@ -109,8 +115,7 @@ public class Digger extends JavaPlugin implements Listener {
             if (args.length == 1) {
                 try {
                     int minutes = Integer.parseInt(args[0].replace("m", ""));
-                    scoreboardUpdateInterval = minutes * 60L * 20L;
-                    saveUpdateIntervalToConfig(scoreboardUpdateInterval);  // configへの保存を行うメソッドを呼び出す
+                    scoreboardUpdateInterval = minutes * 1L * 20L;
                     sender.sendMessage("スコアボードの更新間隔を " + minutes + " 分に設定しました。");
                     return true;
                 } catch (NumberFormatException e) {
@@ -119,8 +124,10 @@ public class Digger extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage("使用方法: /digger [時間(分)]");
             }
+            return true;
         }
-        
+
+
         if (cmd.getName().equalsIgnoreCase("setprobability")) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
@@ -138,7 +145,7 @@ public class Digger extends JavaPlugin implements Listener {
                 try {
                     double newProbability = Double.parseDouble(args[0]);
                     if (newProbability >= 0.0 && newProbability <= 1.0) {
-                        rewardProbability = newProbability;
+                        Digger.rewardProbability = newProbability;
                         sender.sendMessage("確率が " + newProbability + " に設定されました。");
                         return true;
                     } else {
@@ -222,12 +229,21 @@ public class Digger extends JavaPlugin implements Listener {
     }
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+
+        if (worldBlacklist.contains(event.getPlayer().getWorld().getName())) {
+            return;
+        }
+
         Location blockLoc = event.getBlock().getLocation();
         // プレイヤーが設置したブロックを確認
         if (placedBlocks.contains(blockLoc)) {
             placedBlocks.remove(blockLoc);
             return;  // 人為的に置かれたブロックの場合、このブロックのランキングや報酬の処理をスキップ
         }
+        double chance = Math.random();
+        getLogger().info("Random chance: " + chance);
+        getLogger().info("Reward probability: " + rewardProbability);
+        if (chance < rewardProbability) {
 
         List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
         if (blacklist.contains(event.getBlock().getType().name())) {
@@ -238,12 +254,16 @@ public class Digger extends JavaPlugin implements Listener {
         }
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-        if (Math.random() < 0.02) { //2%
+        if (Math.random() < rewardProbability) {
+            getLogger().info("Random chance: " + chance);
+            getLogger().info("Reward probability: " + rewardProbability);
+        }
             economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
             event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
+
+
         }
     }
-
 
     public void updateAllPlayersScoreboard() {
         // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
@@ -284,7 +304,6 @@ public class Digger extends JavaPlugin implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         saveData();
     }
-
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
         loadData();
@@ -292,8 +311,10 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         saveData();
+        getConfig().set("update-interval", scoreboardUpdateInterval);
+        getConfig().set("world-blacklist", worldBlacklist);
+        saveConfig();
     }
-
     private void loadData() {
         dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
@@ -324,7 +345,6 @@ public class Digger extends JavaPlugin implements Listener {
         int y = Integer.parseInt(parts[2]);
         int z = Integer.parseInt(parts[3]);
         return new Location(world, x, y, z);
-
     }
     private void saveData() {
         for (UUID uuid : blockCount.keySet()) {
