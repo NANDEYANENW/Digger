@@ -18,6 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
+
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -230,10 +231,11 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
     }
-    private void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
-        Scoreboard individualScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective individualObjective = individualScoreboard.registerNewObjective("トップ10", "dummy", "整地の順位");
-        individualObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
+    public void updateScoreboard(UUID viewingPlayerUUID, Player viewingPlayer) {
+        // トップ10の整地の順位表示用のスコアボード
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("stats", "dummy", "整地の順位");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
                 .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
@@ -243,17 +245,18 @@ public class Digger extends JavaPlugin implements Listener {
         for (Map.Entry<UUID, Integer> entry : sortedList) {
             String listedPlayerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
             int score = entry.getValue();
-            individualObjective.getScore(listedPlayerName).setScore(score);
+            objective.getScore(listedPlayerName).setScore(score);
         }
 
         int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
         int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore)) + 1;
         String rankDisplay = "§6あなたの順位: " + viewerRank + "位";
+        objective.getScore(rankDisplay).setScore(-1);
 
-        individualObjective.getScore(rankDisplay).setScore(-1);
-        individualObjective.getScore("§6" + viewerScore).setScore(-2);
+        String blocksDugDisplay = "掘ったブロック数:" + viewerScore + "ブロック";
+        objective.getScore(blocksDugDisplay).setScore(-2);
 
-        viewingPlayer.setScoreboard(individualScoreboard);
+        viewingPlayer.setScoreboard(scoreboard);
     }
 
     @EventHandler
