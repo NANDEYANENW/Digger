@@ -46,7 +46,7 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onEnable() { //起動時の初期化処理
         this.saveDefaultConfig();
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability",0.02); //2%
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
         saveDefaultConfig();
         scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
         worldBlacklist = getConfig().getStringList("world-blacklist");
@@ -81,8 +81,9 @@ public class Digger extends JavaPlugin implements Listener {
         getCommand("updatescoreboard").setExecutor(new Commands(this));
         getCommand("setprobability").setExecutor(new Commands(this));
 
-        if(this.getConfig().contains("scoreboardUpdateInterval")){
+        if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+
         }
     } //起動時の初期化処理ここまで
 
@@ -103,6 +104,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
         return true;
     }
+
     private void startScoreboardUpdater() {
         new BukkitRunnable() {
             @Override
@@ -111,32 +113,45 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
     }
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-        if (cmd.getName().equalsIgnoreCase("digger")) {
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
-                if (!player.hasPermission("digger.minute")) {
-                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                    return true;
-                }
-                if (args.length == 1) {
-                    String timeArg = args[0];
-                    long intervalInTicks = parseTimeToTicks(timeArg);
-                    if (intervalInTicks != -1) {
-                        scoreboardUpdateInterval = intervalInTicks;
-                        sender.sendMessage("§aスコアボードの更新間隔を " + timeArg + " に設定しました。");
-                        return true;
-                    } else {
-                        sender.sendMessage("§c無効な時間が指定されました。例：/digger 1m30s");
-                        return true;
-                    }
-                } else {
-                    sender.sendMessage("§3使用方法: /digger [時間(分と秒)]");
-                    return true;
-                }
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
+            return true;
+        }
+
+        Player player = (Player) sender;
+
+        if (cmd.getName().equalsIgnoreCase("setprobability")) {
+            double newProbability;
+
+            try {
+                newProbability = Double.parseDouble(args[0]);
+            } catch (NumberFormatException e) {
+                player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
+                return true;
             }
+
+            if (newProbability >= 0.0 && newProbability <= 1.0) {
+                Digger.rewardProbability = newProbability;
+                this.getConfig().set("rewardProbability", newProbability);
+                this.saveConfig();
+                getLogger().info("Updated rewardProbability: " + Digger.rewardProbability);
+                player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
+                return true;
+            }
+        } else if (cmd.getName().equalsIgnoreCase("reloadprobabilityconfig")) {
+            if (!player.hasPermission("digger.reloadconfig")) {
+                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
+
+            this.reloadConfig();
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.5);
+            player.sendMessage("§aconfig.ymlを再読み込みしました。");
+            return true;
         }
         return false;
     }
@@ -167,7 +182,7 @@ public class Digger extends JavaPlugin implements Listener {
         } catch (NumberFormatException e) {
             getLogger().warning("Invalid time format: " + timeArg);
         }
-       return -1; // Return -1 for invalid format
+        return -1; // Return -1 for invalid format
     }
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -200,11 +215,11 @@ public class Digger extends JavaPlugin implements Listener {
         if (Math.random() < rewardProbability) {
 
         }
-            economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
-            event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
+        economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
+        event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
 
 
-        }
+    }
 
 
     public void updateAllPlayersScoreboard() {
@@ -309,3 +324,8 @@ public class Digger extends JavaPlugin implements Listener {
         return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 }
+
+
+
+
+
