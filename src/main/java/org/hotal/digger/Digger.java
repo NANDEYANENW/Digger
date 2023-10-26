@@ -136,9 +136,9 @@ public class Digger extends JavaPlugin implements Listener {
 
             if (newProbability >= 0.0 && newProbability <= 1.0) {
                 Digger.rewardProbability = newProbability;
+                getLogger().info("Current rewardProbability: " + Digger.rewardProbability);
                 this.getConfig().set("rewardProbability", newProbability);
                 this.saveConfig();
-                getLogger().info("Updated rewardProbability: " + Digger.rewardProbability);
                 player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
                 return true;
             }
@@ -213,10 +213,10 @@ public class Digger extends JavaPlugin implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
         if (Math.random() < rewardProbability) {
-
+            economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
+            event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
         }
-        economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
-        event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
+
 
 
     }
