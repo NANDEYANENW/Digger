@@ -253,7 +253,7 @@ public class Digger extends JavaPlugin implements Listener {
         String rankDisplay = "§6あなたの順位: " + viewerRank + "位";
         objective.getScore(rankDisplay).setScore(-1);
 
-        String blocksDugDisplay = "掘ったブロック数:" + viewerScore + "ブロック";
+        String blocksDugDisplay ="§4掘ったブロック数:" + viewerScore + "ブロック";
         objective.getScore(blocksDugDisplay).setScore(-2);
 
         viewingPlayer.setScoreboard(scoreboard);
