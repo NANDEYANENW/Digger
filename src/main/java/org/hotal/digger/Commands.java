@@ -47,7 +47,10 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
                 return true;
             }
-
+            if (args.length == 0) {
+                player.sendMessage("§c確率を指定してください。例: /digger:setprobability 0.5");
+                return true;
+            }
             if (newProbability >= 0.0 && newProbability <= 1.0) {
                 Digger.rewardProbability = newProbability;
                 config.set("rewardProbability", newProbability);  // 以前のthis.getConfig()をconfigに変更
