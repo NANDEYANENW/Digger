@@ -8,7 +8,8 @@ import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor {
     private final Digger diggerPlugin;
-    public double rewardProbability = 0.02; // デフォルトは2%
+    public double rewardProbability = 0.02; //デフォルトは2%
+
 
     public Commands(Digger diggerPlugin) {
         this.diggerPlugin = diggerPlugin;
@@ -28,25 +29,12 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
-            diggerPlugin.updateAllPlayersScoreboard();
+            diggerPlugin.updateAllPlayersScoreboard(); // こちらのメソッドは既存のクラス内に存在すると仮定しています。
             player.sendMessage("§aスコアボードをアップデートしました。");
             return true;
         }
-
-        if (command.getName().equalsIgnoreCase("reloadprobabilityconfig")) {
-            if (!player.hasPermission("digger.reloadconfig")) {
-                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                return true;
-            }
-            diggerPlugin.reloadConfig();
-            diggerPlugin.rewardProbability = diggerPlugin.getConfig().getDouble("rewardProbability", 0.5);
-            player.sendMessage("§aconfig.ymlを再読み込みしました。");
-            return true;
+        return false;
         }
 
-        return false;
+
     }
-}
-
-
-

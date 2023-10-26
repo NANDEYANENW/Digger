@@ -137,19 +137,8 @@ public class Digger extends JavaPlugin implements Listener {
                     return true;
                 }
             }
-        } else if (cmd.getName().equalsIgnoreCase("updatescoreboard")) {
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
-                if (!player.hasPermission("digger.debug")) {
-                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                    return true;
-                }
-            }
         }
         return false;
-
-
-
     }
 
     private void saveUpdateIntervalToConfig(long interval) {
