@@ -59,7 +59,7 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
                 return true;
             }
-        } else if (cmdName.equalsIgnoreCase("reloadprobabilityconfig")) {
+        } else if (cmdName.equalsIgnoreCase("reloadconfig")) {
             if (!player.hasPermission("digger.reloadconfig")) {
                 player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                 return true;
