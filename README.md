@@ -8,5 +8,6 @@ config.ymlにて更新する秒が変更できます。初期は20(1秒)。
 コマンド類
 /digger:updatescoreboard 
 /digger:setprobability
+/digger:reload
 前提プラグイン
 ・Vault
