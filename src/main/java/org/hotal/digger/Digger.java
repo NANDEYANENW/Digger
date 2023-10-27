@@ -81,7 +81,7 @@ public class Digger extends JavaPlugin implements Listener {
         //コマンドの登録
         getCommand("updatescoreboard").setExecutor(new Commands(this));
         getCommand("setprobability").setExecutor(new Commands(this));
-        getCommand("reloadconfig").setExecutor(new Commands(this));
+        getCommand("reload").setExecutor(new Commands(this));
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
 
@@ -143,8 +143,8 @@ public class Digger extends JavaPlugin implements Listener {
                 player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
                 return true;
             }
-        } else if (cmd.getName().equalsIgnoreCase("reloadconfig")) {
-            if (!player.hasPermission("digger.reloadconfig")) {
+        } else if (cmd.getName().equalsIgnoreCase("reload")) {
+            if (!player.hasPermission("digger.reload")) {
                 player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }

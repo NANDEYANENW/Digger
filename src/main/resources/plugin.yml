@@ -10,12 +10,18 @@ commands:
     description: スコアボードをアップデートします（OP用）。
     usage: /updatescoreboard
   setprobability:
-      description: 確率を変更します（OP用）。
-      usage: /setprobability
+    description: 確率を変更します（OP用）。
+    usage: /setprobability
+  reload:
+    description: 設定を再読み込みします。
+    usage: /reloadconfig
 permissions:
   digger.debug:
     description: スコアボードをアップデートします（OP限定）。
     default: op
   digger.setprobability:
     description: 確率を変更します。（OP限定）。
+    default: op
+  digger.reload:
+    description: 設定を再読み込みします。
     default: op
