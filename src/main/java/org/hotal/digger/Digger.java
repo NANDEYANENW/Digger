@@ -216,7 +216,7 @@ public class Digger extends JavaPlugin implements Listener {
         if (Math.random() < rewardProbability) {
             economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
             event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
-            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0F, 1.0F);
+            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
         }
 
     }
