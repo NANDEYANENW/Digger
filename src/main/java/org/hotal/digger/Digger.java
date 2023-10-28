@@ -230,6 +230,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
+            this.getLogger().info("[DEBUG] rewardMap contents: " + rewardMap);
             Player player = event.getPlayer();
             ItemStack itemInHand = player.getInventory().getItemInMainHand();
             Material toolType = itemInHand.getType();
