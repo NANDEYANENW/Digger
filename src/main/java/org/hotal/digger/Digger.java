@@ -373,7 +373,7 @@ public class Digger extends JavaPlugin implements Listener {
             return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
         }
     }
-}
+
 
 
 
