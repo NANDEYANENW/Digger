@@ -30,7 +30,7 @@ import java.io.IOException;
 public class Digger extends JavaPlugin implements Listener {
     public static double rewardProbability = 0.02;
 
-    public ToolMoney toolMoney = new ToolMoney(getConfig());
+    public ToolMoney toolMoney = new ToolMoney(getConfig(),this);
     private final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
@@ -63,7 +63,7 @@ public class Digger extends JavaPlugin implements Listener {
             dataFile.getParentFile().mkdirs();
             saveResource("player-data.yml", false);
         }
-        toolMoney = new ToolMoney(getConfig());
+        toolMoney = new ToolMoney(getConfig(),this);
 
         YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
         this.dataConfig = yamlConfiguration;
@@ -102,7 +102,7 @@ public class Digger extends JavaPlugin implements Listener {
         startScoreboardUpdater();
         this.saveDefaultConfig();
 
-        ToolMoney toolMoneyInstance = new ToolMoney(getConfig()); // ToolMoneyインスタンスを作成
+        ToolMoney toolMoneyInstance = new ToolMoney(getConfig(),this); // ToolMoneyインスタンスを作成
         Commands commandExecutor = new Commands(this, toolMoneyInstance); // Commandsクラスをインスタンス化するときにToolMoneyも渡す
         //コマンドの登録
         getCommand("updatescoreboard").setExecutor(commandExecutor);
@@ -112,7 +112,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
-            toolMoney = new ToolMoney(getConfig());
+            toolMoney = new ToolMoney(getConfig(),this);
         }
     } //起動時の初期化処理ここまで
 
