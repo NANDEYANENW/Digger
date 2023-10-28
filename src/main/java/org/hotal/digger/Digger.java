@@ -198,7 +198,6 @@ public class Digger extends JavaPlugin implements Listener {
 
                 if (newProbability >= 0.0 && newProbability <= 1.0) {
                     Digger.rewardProbability = newProbability;
-                    getLogger().info("Current rewardProbability: " + Digger.rewardProbability);
                     this.getConfig().set("rewardProbability", newProbability);
                     this.saveConfig();
                     player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
@@ -253,7 +252,7 @@ public class Digger extends JavaPlugin implements Listener {
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
 
-            this.getLogger().info("[DEBUG] isToolRewardEnabled in onBlockBreak: " + isToolRewardEnabled);
+
             Player player = event.getPlayer();
             Material toolType = player.getInventory().getItemInMainHand().getType();
 
@@ -264,9 +263,6 @@ public class Digger extends JavaPlugin implements Listener {
             } else {
                 toolReward = 50;
             }
-
-// デバッグログの追加
-            this.getLogger().info("[DEBUG] toolType: " + toolType + ", toolReward: " + toolReward);
 
 
             if (worldBlacklist.contains(player.getWorld().getName())) {
