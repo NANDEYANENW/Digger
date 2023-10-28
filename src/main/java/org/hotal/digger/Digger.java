@@ -30,6 +30,8 @@ import java.io.IOException;
 
 
 public class Digger extends JavaPlugin implements Listener {
+    private boolean isToolRewardEnabled = true;
+
     public static double rewardProbability = 0.02;
 
     public ToolMoney toolMoney = new ToolMoney(getConfig(), this);
@@ -48,6 +50,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() { //起動時の初期化処理
+
         Map<Material, Integer> rewardMap = new HashMap<>();
         // Configファイルをロードまたは作成
         saveDefaultConfig();
@@ -235,16 +238,19 @@ public class Digger extends JavaPlugin implements Listener {
         }
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
-        Player player = event.getPlayer();
-            ItemStack itemInHand = player.getInventory().getItemInMainHand();
-            Material toolType = itemInHand.getType();
+            Player player = event.getPlayer();
+            Material toolType = player.getInventory().getItemInMainHand().getType();
 
-            // プレイヤーが何も持っていないか、空気を持っている場合
-            if (itemInHand == null || toolType == Material.AIR) {
-                return;  // 何もせずにイベントを終了
+// isToolRewardEnabled をチェックして、報酬の額を決定する
+            Integer toolReward;
+            if (isToolRewardEnabled) {
+                toolReward = rewardMap.getOrDefault(toolType, 50);
+            } else {
+                toolReward = 50;
             }
 
-            Integer toolReward = rewardMap.getOrDefault(toolType, 50);
+// デバッグログの追加
+            this.getLogger().info("[DEBUG] toolType: " + toolType + ", toolReward: " + toolReward);
 
 
             if (worldBlacklist.contains(player.getWorld().getName())) {
@@ -410,7 +416,10 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
 
+
+
     }
+
 }
 
 

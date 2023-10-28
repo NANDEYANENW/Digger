@@ -9,6 +9,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor {
+    private boolean isToolRewardEnabled = true;
+
     private final Digger plugin;
     private final ToolMoney toolMoney;
 
@@ -72,22 +74,26 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
-            if (args.length > 0) { // 修正: args.length > 1 から args.length > 0
-                if (args[0].equalsIgnoreCase("on")) {
-                    this.toolMoney.setToolMoneyEnabled(true);
-                    player.sendMessage("ツール別の報酬を有効にしました。");
-                } else if (args[0].equalsIgnoreCase("off")) { // 修正: args[1] から args[0]
-                    this.toolMoney.setToolMoneyEnabled(false);
-                    player.sendMessage("ツール別の報酬を無効にしました。");
+            if (command.getName().equalsIgnoreCase("tools")) {
+                if (args.length > 0) {
+                    if (args[0].equalsIgnoreCase("on")) {
+                        isToolRewardEnabled = true;
+                        sender.sendMessage("ツール別の報酬が有効になりました。");
+                        return true;
+                    } else if (args[0].equalsIgnoreCase("off")) {
+                        isToolRewardEnabled = false;
+                        sender.sendMessage("ツール別の報酬が無効になりました。");
+                        return true;
+                    }
                 }
-                return true;
             }
-        }
 
+        }
         return false;
     }
-
 }
+
+
 
 
 
