@@ -65,6 +65,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         File configFile = new File(getDataFolder(), "config.yml");
+
         if (!configFile.exists()) {
             saveDefaultConfig();
         } else {
