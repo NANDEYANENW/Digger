@@ -82,12 +82,12 @@ public class Commands implements CommandExecutor {
             if (args[0].equalsIgnoreCase("on")) {
                 Digger.getInstance().isToolRewardEnabled = true;
                 sender.sendMessage("ツール別の報酬が有効になりました。");
-                Bukkit.getLogger().info("[DEBUG] isToolRewardEnabled set to: " + Digger.getInstance().isToolRewardEnabled);
+
                 return true;
             } else if (args[0].equalsIgnoreCase("off")) {
                 Digger.getInstance().isToolRewardEnabled = false;
                 sender.sendMessage("ツール別の報酬が無効になりました。");
-                Bukkit.getLogger().info("[DEBUG] isToolRewardEnabled set to: " + Digger.getInstance().isToolRewardEnabled);
+
                 return true;
             }
         }
