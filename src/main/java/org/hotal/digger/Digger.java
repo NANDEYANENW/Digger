@@ -3,6 +3,7 @@ import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -386,7 +387,32 @@ public class Digger extends JavaPlugin implements Listener {
         private String locationToString (Location loc){
             return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
         }
+
+    public void loadToolRewards() {
+        rewardMap.clear();
+        ConfigurationSection section = this.getConfig().getConfigurationSection("tools");
+        if (section == null) {
+            this.getLogger().info("[DEBUG] 'tools' section is not found in the config.");
+            return;
+        }
+
+        for (String key : section.getKeys(false)) {
+            Material material = Material.getMaterial(key);
+            if (material != null) {
+                rewardMap.put(material, section.getInt(key));
+                this.getLogger().info("[DEBUG] Loaded reward for " + key + ": " + section.getInt(key));
+            } else {
+                this.getLogger().info("[DEBUG] Failed to load material for " + key);
+            }
+        }
     }
+
+
+
+
+
+
+}
 
 
 
