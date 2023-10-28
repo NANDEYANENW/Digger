@@ -64,9 +64,13 @@ public class Digger extends JavaPlugin implements Listener {
             saveResource("player-data.yml", false);
         }
 
-        if (!new File(getDataFolder(), "config.yml").exists()) {
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
             saveDefaultConfig();
-        }
+        } else {
+        reloadConfig();  // すでに存在する config.yml の内容を読み込む
+    }
+
         toolMoney = new ToolMoney(getConfig(), this);
 
         YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
