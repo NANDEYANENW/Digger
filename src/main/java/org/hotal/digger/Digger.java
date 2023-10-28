@@ -235,8 +235,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
-            this.getLogger().info("[DEBUG] rewardMap contents: " + rewardMap);
-            Player player = event.getPlayer();
+        Player player = event.getPlayer();
             ItemStack itemInHand = player.getInventory().getItemInMainHand();
             Material toolType = itemInHand.getType();
 
@@ -247,8 +246,6 @@ public class Digger extends JavaPlugin implements Listener {
 
             Integer toolReward = rewardMap.getOrDefault(toolType, 50);
 
-            // デバッグログの追加
-            this.getLogger().info("[DEBUG] toolType: " + toolType + ", toolReward: " + toolReward);
 
             if (worldBlacklist.contains(player.getWorld().getName())) {
                 return;
@@ -397,7 +394,7 @@ public class Digger extends JavaPlugin implements Listener {
         ConfigurationSection toolsSection = getConfig().getConfigurationSection("tools");
 
         if (toolsSection == null) {
-            this.getLogger().warning("[Digger] 'tools' section missing in config.yml.");
+
             return;
         }
 
@@ -409,12 +406,10 @@ public class Digger extends JavaPlugin implements Listener {
             if (material != null) {
                 rewardMap.put(material, reward);
             } else {
-                this.getLogger().warning("[Digger] Invalid material name in config: " + key);
+
             }
         }
 
-        // デバッグログの追加
-        this.getLogger().info("[DEBUG] rewardMap contents: " + rewardMap);
     }
 }
 
