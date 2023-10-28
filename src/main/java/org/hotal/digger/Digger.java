@@ -50,6 +50,7 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() { //起動時の初期化処理
         Map<Material, Integer> rewardMap = new HashMap<>();
 
+
         rewardMap.put(Material.DIAMOND_PICKAXE, 250);
         rewardMap.put(Material.DIAMOND_SHOVEL, 250);
         rewardMap.put(Material.GOLDEN_PICKAXE, 175);
@@ -71,6 +72,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         if (!configFile.exists()) {
             saveDefaultConfig();
+            loadToolRewards();
         } else {
         reloadConfig();  // すでに存在する config.yml の内容を読み込む
     }
@@ -390,9 +392,9 @@ public class Digger extends JavaPlugin implements Listener {
 
     public void loadToolRewards() {
         rewardMap.clear();
-        ConfigurationSection section = this.getConfig().getConfigurationSection("tools");
+        ConfigurationSection section = getConfig().getConfigurationSection("tool-money");
         if (section == null) {
-            this.getLogger().info("[DEBUG] 'tools' section is not found in the config.");
+            this.getLogger().info("[DEBUG] 'tool-money' section is not found in config.yml.");
             return;
         }
 
@@ -406,13 +408,8 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
     }
-
-
-
-
-
-
 }
+
 
 
 
