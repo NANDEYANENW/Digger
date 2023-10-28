@@ -391,24 +391,28 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
     public void loadToolRewards() {
-        rewardMap.clear();
-        ConfigurationSection section = getConfig().getConfigurationSection("tool-money");
-        if (section == null) {
-            this.getLogger().info("[DEBUG] 'tool-money' section is not found in config.yml.");
+        rewardMap.clear();  // 既存の報酬をクリア
+        ConfigurationSection toolsSection = getConfig().getConfigurationSection("tools");
+        if (toolsSection == null) {
+            this.getLogger().warning("[Digger] 'tools' section missing in config.yml.");
             return;
         }
 
-        for (String key : section.getKeys(false)) {
-            Material material = Material.getMaterial(key);
-            if (material != null) {
-                rewardMap.put(material, section.getInt(key));
-                this.getLogger().info("[DEBUG] Loaded reward for " + key + ": " + section.getInt(key));
+        for (String toolName : toolsSection.getKeys(false)) {
+            Material tool = Material.matchMaterial(toolName);
+            int reward = toolsSection.getInt(toolName, 50);
+            if (tool != null) {
+                rewardMap.put(tool, reward);
             } else {
-                this.getLogger().info("[DEBUG] Failed to load material for " + key);
+                this.getLogger().warning("[Digger] Invalid tool name in config.yml: " + toolName);
             }
         }
+
+        // デバッグログの追加
+        this.getLogger().info("[DEBUG] rewardMap contents: " + rewardMap);
     }
 }
+
 
 
 
