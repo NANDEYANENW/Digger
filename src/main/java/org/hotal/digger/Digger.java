@@ -30,7 +30,9 @@ import java.io.IOException;
 
 
 public class Digger extends JavaPlugin implements Listener {
-    private boolean isToolRewardEnabled = true;
+    public boolean isToolRewardEnabled = true;
+    private static Digger instance;
+    private Boolean currentSetting = null;
 
     public static double rewardProbability = 0.02;
 
@@ -48,10 +50,24 @@ public class Digger extends JavaPlugin implements Listener {
     private List<String> worldBlacklist = new ArrayList<>();
     private Material toolType;
 
+    public Digger() {
+        instance = this;
+    }
+
+    public static Digger getInstance() {
+        return instance;
+    }
+
+    public boolean getCurrentSetting() {
+        if (currentSetting == null) {
+            currentSetting = Digger.getInstance().isToolRewardEnabled;
+        }
+        return currentSetting;
+    }
+
+
     @Override
     public void onEnable() { //起動時の初期化処理
-
-        Map<Material, Integer> rewardMap = new HashMap<>();
         // Configファイルをロードまたは作成
         saveDefaultConfig();
 
@@ -87,8 +103,6 @@ public class Digger extends JavaPlugin implements Listener {
         YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
         this.dataConfig = yamlConfiguration;
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
-
         scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
         worldBlacklist = getConfig().getStringList("world-blacklist");
 
@@ -121,8 +135,8 @@ public class Digger extends JavaPlugin implements Listener {
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
 
 
-        scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
-        worldBlacklist = getConfig().getStringList("world-blacklist");
+
+
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
         getCommand("updatescoreboard").setExecutor(commandExecutor);
@@ -238,6 +252,8 @@ public class Digger extends JavaPlugin implements Listener {
         }
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
+
+            this.getLogger().info("[DEBUG] isToolRewardEnabled in onBlockBreak: " + isToolRewardEnabled);
             Player player = event.getPlayer();
             Material toolType = player.getInventory().getItemInMainHand().getType();
 
@@ -415,8 +431,6 @@ public class Digger extends JavaPlugin implements Listener {
 
             }
         }
-
-
 
     }
 

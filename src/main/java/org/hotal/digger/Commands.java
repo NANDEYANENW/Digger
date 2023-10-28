@@ -2,6 +2,7 @@ package org.hotal.digger;
 
 
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,7 +11,7 @@ import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor {
     private boolean isToolRewardEnabled = true;
-
+    boolean currentSetting = Digger.getInstance().isToolRewardEnabled;
     private final Digger plugin;
     private final ToolMoney toolMoney;
 
@@ -74,20 +75,21 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
-            if (command.getName().equalsIgnoreCase("tools")) {
-                if (args.length > 0) {
-                    if (args[0].equalsIgnoreCase("on")) {
-                        isToolRewardEnabled = true;
-                        sender.sendMessage("ツール別の報酬が有効になりました。");
-                        return true;
-                    } else if (args[0].equalsIgnoreCase("off")) {
-                        isToolRewardEnabled = false;
-                        sender.sendMessage("ツール別の報酬が無効になりました。");
-                        return true;
-                    }
-                }
+            if (args.length == 0) {
+                player.sendMessage("§c 引数を指定してください。例: /digger:tools on");
+                return true;
             }
-
+            if (args[0].equalsIgnoreCase("on")) {
+                Digger.getInstance().isToolRewardEnabled = true;
+                sender.sendMessage("ツール別の報酬が有効になりました。");
+                Bukkit.getLogger().info("[DEBUG] isToolRewardEnabled set to: " + Digger.getInstance().isToolRewardEnabled);
+                return true;
+            } else if (args[0].equalsIgnoreCase("off")) {
+                Digger.getInstance().isToolRewardEnabled = false;
+                sender.sendMessage("ツール別の報酬が無効になりました。");
+                Bukkit.getLogger().info("[DEBUG] isToolRewardEnabled set to: " + Digger.getInstance().isToolRewardEnabled);
+                return true;
+            }
         }
         return false;
     }
