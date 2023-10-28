@@ -49,6 +49,11 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onEnable() { //起動時の初期化処理
         Map<Material, Integer> rewardMap = new HashMap<>();
+        // Configファイルをロードまたは作成
+        saveDefaultConfig();
+
+        // ツール報酬をロード
+        loadToolRewards();
 
 
         rewardMap.put(Material.DIAMOND_PICKAXE, 250);
@@ -70,12 +75,9 @@ public class Digger extends JavaPlugin implements Listener {
 
         File configFile = new File(getDataFolder(), "config.yml");
 
-        if (!configFile.exists()) {
-            saveDefaultConfig();
-            loadToolRewards();
-        } else {
+
+
         reloadConfig();  // すでに存在する config.yml の内容を読み込む
-    }
 
         toolMoney = new ToolMoney(getConfig(), this);
 
@@ -390,21 +392,24 @@ public class Digger extends JavaPlugin implements Listener {
             return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
         }
 
-    public void loadToolRewards() {
-        rewardMap.clear();  // 既存の報酬をクリア
+    private void loadToolRewards() {
+        // "tools"セクションを取得
         ConfigurationSection toolsSection = getConfig().getConfigurationSection("tools");
+
         if (toolsSection == null) {
             this.getLogger().warning("[Digger] 'tools' section missing in config.yml.");
             return;
         }
 
-        for (String toolName : toolsSection.getKeys(false)) {
-            Material tool = Material.matchMaterial(toolName);
-            int reward = toolsSection.getInt(toolName, 50);
-            if (tool != null) {
-                rewardMap.put(tool, reward);
+        // セクション内の全てのキーと値を取得してrewardMapに保存
+        for (String key : toolsSection.getKeys(false)) {
+            Material material = Material.getMaterial(key);
+            int reward = toolsSection.getInt(key);
+
+            if (material != null) {
+                rewardMap.put(material, reward);
             } else {
-                this.getLogger().warning("[Digger] Invalid tool name in config.yml: " + toolName);
+                this.getLogger().warning("[Digger] Invalid material name in config: " + key);
             }
         }
 
