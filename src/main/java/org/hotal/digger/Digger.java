@@ -11,6 +11,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -42,6 +43,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     private final List<Location> placedBlocks = new ArrayList<>();
     private List<String> worldBlacklist = new ArrayList<>();
+    private Material toolType;
 
     @Override
     public void onEnable() { //起動時の初期化処理
@@ -187,7 +189,7 @@ public class Digger extends JavaPlugin implements Listener {
                 }
 
                 this.reloadConfig();
-                Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.5);
+                Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
                 player.sendMessage("§aconfig.ymlを再読み込みしました。");
                 return true;
             }
@@ -229,14 +231,20 @@ public class Digger extends JavaPlugin implements Listener {
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
             Player player = event.getPlayer();
-            Material toolType = player.getInventory().getItemInMainHand().getType();
+            ItemStack itemInHand = player.getInventory().getItemInMainHand();
+            Material toolType = itemInHand.getType();
+
+            // プレイヤーが何も持っていないか、空気を持っている場合
+            if (itemInHand == null || toolType == Material.AIR) {
+                return;  // 何もせずにイベントを終了
+            }
+
             Integer toolReward = rewardMap.getOrDefault(toolType, 50);
 
+            // デバッグログの追加
+            this.getLogger().info("[DEBUG] toolType: " + toolType + ", toolReward: " + toolReward);
 
-            // この部分は不要で、すでにrewardMapを使用して報酬を取得しているため。
-            // toolMoney = new ToolMoney(getConfig());
-
-            if (worldBlacklist.contains(event.getPlayer().getWorld().getName())) {
+            if (worldBlacklist.contains(player.getWorld().getName())) {
                 return;
             }
 
@@ -255,13 +263,13 @@ public class Digger extends JavaPlugin implements Listener {
                 return;
             }
 
-            UUID playerID = event.getPlayer().getUniqueId();
+            UUID playerID = player.getUniqueId();
             blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
             if (Math.random() < rewardProbability) {
-                economy.depositPlayer(event.getPlayer(), toolReward); // toolRewardを使用して報酬をセット
-                event.getPlayer().sendMessage("§a " + toolReward + "NANDEを手に入れました。");
-                event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
+                economy.depositPlayer(player, toolReward);
+                player.sendMessage("§a " + toolReward + "NANDEを手に入れました。");
+                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
             }
         }
 
