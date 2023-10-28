@@ -1,9 +1,6 @@
 package org.hotal.digger;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,7 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
-
+import org.bukkit.Material;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -29,15 +26,17 @@ import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
 
+
 public class Digger extends JavaPlugin implements Listener {
     public static double rewardProbability = 0.02;
 
+    public ToolMoney toolMoney = new ToolMoney(getConfig());
     private final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
     private long scoreboardUpdateInterval = 20L;
     private Objective objective;
-
+    private final Map<Material, Integer> rewardMap = new HashMap<>();
     private File dataFile;
     private FileConfiguration dataConfig;
 
@@ -46,9 +45,33 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() { //起動時の初期化処理
+        Map<Material, Integer> rewardMap = new HashMap<>();
+
+        rewardMap.put(Material.DIAMOND_PICKAXE, 250);
+        rewardMap.put(Material.DIAMOND_SHOVEL, 250);
+        rewardMap.put(Material.GOLDEN_PICKAXE, 175);
+        rewardMap.put(Material.GOLDEN_SHOVEL, 175);
+        rewardMap.put(Material.IRON_PICKAXE, 150);
+        rewardMap.put(Material.IRON_SHOVEL, 150);
+        rewardMap.put(Material.STONE_PICKAXE, 100);
+        rewardMap.put(Material.STONE_SHOVEL, 100);
+        rewardMap.put(Material.WOODEN_PICKAXE, 50);
+        rewardMap.put(Material.WOODEN_SHOVEL, 50);
+        FileConfiguration dataConfig;
+        File dataFile = new File(getDataFolder(), "player-data.yml");
+        if (!dataFile.exists()) {
+            dataFile.getParentFile().mkdirs();
+            saveResource("player-data.yml", false);
+        }
+        toolMoney = new ToolMoney(getConfig());
+
+        YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
+        this.dataConfig = yamlConfiguration;
+
         this.saveDefaultConfig();
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
         saveDefaultConfig();
+
         scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
         worldBlacklist = getConfig().getStringList("world-blacklist");
 
@@ -78,13 +101,18 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
         this.saveDefaultConfig();
+
+        ToolMoney toolMoneyInstance = new ToolMoney(getConfig()); // ToolMoneyインスタンスを作成
+        Commands commandExecutor = new Commands(this, toolMoneyInstance); // Commandsクラスをインスタンス化するときにToolMoneyも渡す
         //コマンドの登録
-        getCommand("updatescoreboard").setExecutor(new Commands(this));
-        getCommand("setprobability").setExecutor(new Commands(this));
-        getCommand("reload").setExecutor(new Commands(this));
+        getCommand("updatescoreboard").setExecutor(commandExecutor);
+        getCommand("setprobability").setExecutor(commandExecutor);
+        getCommand("reload").setExecutor(commandExecutor);
+        getCommand("tools").setExecutor(commandExecutor);
+
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
-
+            toolMoney = new ToolMoney(getConfig());
         }
     } //起動時の初期化処理ここまで
 
@@ -191,35 +219,44 @@ public class Digger extends JavaPlugin implements Listener {
     }
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        Material toolType = player.getInventory().getItemInMainHand().getType();
+        Integer toolReward = rewardMap.getOrDefault(toolType, 50);
+
+
+        // この部分は不要で、すでにrewardMapを使用して報酬を取得しているため。
+        // toolMoney = new ToolMoney(getConfig());
 
         if (worldBlacklist.contains(event.getPlayer().getWorld().getName())) {
             return;
         }
 
         Location blockLoc = event.getBlock().getLocation();
-        // プレイヤーが設置したブロックを確認
         if (placedBlocks.contains(blockLoc)) {
             placedBlocks.remove(blockLoc);
-            return;  // 人為的に置かれたブロックの場合、このブロックのランキングや報酬の処理をスキップ
+            return;
         }
-        double chance = Math.random();
 
-        List<String> blacklist = this.getConfig().getStringList("block-blacklist"); //ブラックリスト機能
+        List<String> blacklist = this.getConfig().getStringList("block-blacklist");
         if (blacklist.contains(event.getBlock().getType().name())) {
             return;
         }
+
         if (scoreboard == null || objective == null) {
             return;
         }
+
         UUID playerID = event.getPlayer().getUniqueId();
         blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
+
         if (Math.random() < rewardProbability) {
-            economy.depositPlayer(event.getPlayer(), 50); //50NANDE 追加
-            event.getPlayer().sendMessage("§a 50NANDEを手に入れました。");
+            economy.depositPlayer(event.getPlayer(), toolReward); // toolRewardを使用して報酬をセット
+            event.getPlayer().sendMessage("§a " + toolReward + "NANDEを手に入れました。");
             event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
         }
-
     }
+
+
 
 
     public void updateAllPlayersScoreboard() {
@@ -243,10 +280,13 @@ public class Digger extends JavaPlugin implements Listener {
                 .collect(Collectors.toList());
 
         for (Map.Entry<UUID, Integer> entry : sortedList) {
-            String listedPlayerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+            if (offlinePlayer == null || offlinePlayer.getName() == null) {
+                continue; // nullの場合は処理をスキップ
+            }
+            String listedPlayerName = offlinePlayer.getName();
             int score = entry.getValue();
             objective.getScore(listedPlayerName).setScore(score);
-        }
 
         int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
         int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore)) + 1;
@@ -257,6 +297,7 @@ public class Digger extends JavaPlugin implements Listener {
         objective.getScore(blocksDugDisplay).setScore(-2);
 
         viewingPlayer.setScoreboard(scoreboard);
+        }
     }
 
     @EventHandler
@@ -306,6 +347,10 @@ public class Digger extends JavaPlugin implements Listener {
         return new Location(world, x, y, z);
     }
     private void saveData() {
+        if (dataConfig == null) {
+            getLogger().severe("§a DataConfigが初期化されていません。データの保存をスキップします。");
+            return;
+        }
         for (UUID uuid : blockCount.keySet()) {
             dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
         }

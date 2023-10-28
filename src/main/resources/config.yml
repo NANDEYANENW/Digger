@@ -9,6 +9,17 @@ world-blacklist:
   - world_nether
   - world_the_end
 rewardProbability: 0.02
-
+use-tool-money: true
+tool-money:
+  DIAMOND_PICKAXE: 250
+  DIAMOND_SHOVEL: 250
+  GOLDEN_PICKAXE: 175
+  GOLDEN_SHOVEL: 175
+  IRON_PICKAXE: 150
+  IRON_SHOVEL: 150
+  STONE_PICKAXE: 100
+  STONE_SHOVEL: 100
+  WOODEN_PICKAXE: 50
+  WOODEN_SHOVEL: 50
 
 

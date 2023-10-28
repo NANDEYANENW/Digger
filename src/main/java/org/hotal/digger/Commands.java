@@ -1,7 +1,7 @@
 package org.hotal.digger;
 
 
-import org.bukkit.Bukkit;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,11 +10,11 @@ import org.bukkit.entity.Player;
 
 public class Commands implements CommandExecutor {
     private final Digger plugin;
-    public double rewardProbability = 0.02; //デフォルトは2%
+    private final ToolMoney toolMoney;
 
-
-    public Commands(Digger plugin) {
+    public Commands(Digger plugin, ToolMoney toolMoney) {
         this.plugin = plugin;
+        this.toolMoney = toolMoney;
     }
 
 
@@ -67,10 +67,33 @@ public class Commands implements CommandExecutor {
             Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.5);  // こちらも変更
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
+        } else if (cmdName.equalsIgnoreCase("tools")) {
+            if (!player.hasPermission("digger.tools")) {
+                player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
+            if (args.length > 0) { // 修正: args.length > 1 から args.length > 0
+                if (args[0].equalsIgnoreCase("on")) {
+                    this.toolMoney.setToolMoneyEnabled(true);
+                    player.sendMessage("ツール別の報酬を有効にしました。");
+                } else if (args[0].equalsIgnoreCase("off")) { // 修正: args[1] から args[0]
+                    this.toolMoney.setToolMoneyEnabled(false);
+                    player.sendMessage("ツール別の報酬を無効にしました。");
+                }
+                return true;
+            }
         }
+
         return false;
     }
+
 }
+
+
+
+
+
+
 
 
 

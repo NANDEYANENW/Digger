@@ -14,7 +14,11 @@ commands:
     usage: /setprobability
   reload:
     description: 設定を再読み込みします。
-    usage: /reloadconfig
+    usage: /reload
+  tools:
+    description: ツール別にお金を設定します。
+    usage: /tools
+
 permissions:
   digger.debug:
     description: スコアボードをアップデートします（OP限定）。
@@ -24,4 +28,7 @@ permissions:
     default: op
   digger.reload:
     description: 設定を再読み込みします。
+    default: op
+  digger.tools:
+    description: ツール別にお金を設定します。
     default: op
