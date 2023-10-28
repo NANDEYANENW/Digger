@@ -4,11 +4,13 @@
 PaperMC 1.20.1
 ©蛍 2023
 使い方
-config.ymlにて更新する秒が変更できます。初期は20tick(1秒)。
+pluginsフォルダーに入れてください。
+
 コマンド類
-/digger:updatescoreboard 
-/digger:setprobability
-/digger:reload
+/digger:updatescoreboard スコアボードをアップデートします
+/digger:setprobability　確率を操作します
+/digger:reload config.ymlを再読み込みします。
+/digger:tools on/off ツール別の報酬を貰えるようにします（on/off可)。
 前提プラグイン
 ・Vault(必須)
 ・Jecon(任意)
