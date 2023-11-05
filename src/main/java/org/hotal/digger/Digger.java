@@ -21,8 +21,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
@@ -216,7 +215,7 @@ public class Digger extends JavaPlugin implements Listener {
             this.getConfig().set("scoreboardUpdateInterval", interval);
             this.saveConfig();
         }
-
+        
     @EventHandler
         public void onBlockPlace (BlockPlaceEvent event){
             placedBlocks.add(event.getBlock().getLocation());
