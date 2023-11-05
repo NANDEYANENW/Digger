@@ -297,7 +297,7 @@ public class Digger extends JavaPlugin implements Listener {
                 }
             }
         }
-        public void updateScoreboard (UUID viewingPlayerUUID, Player viewingPlayer){
+        public void updateScoreboard (UUID viewingPlayerUUID, Player viewingPlayer) {
             // トップ10の整地の順位表示用のスコアボード
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
             Objective objective = scoreboard.registerNewObjective("stats", "dummy", "整地の順位");

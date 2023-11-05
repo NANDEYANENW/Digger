@@ -30,6 +30,8 @@ world-blacklist:
 rewardProbability: 0.04
 use-tool-money: true
 tools:
+  NETHERITE_SHOVEL: 300
+  NETHERITE_PICKAXE: 300
   DIAMOND_PICKAXE: 200
   DIAMOND_SHOVEL: 200
   GOLDEN_PICKAXE: 175
