@@ -20,6 +20,8 @@ block-blacklist:
   - "PINK_PETALS"
   - "SPORE_BLOSSOM"
   - "ROSE_BUSH"
+  - "GRASS"
+  - "GRASS_BLOCK"
 update-interval: 20
 world-blacklist:
   - world_nether
