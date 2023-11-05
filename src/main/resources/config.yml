@@ -23,7 +23,7 @@ block-blacklist:
   - "GRASS"
   - "GRASS_BLOCK"
   - "GRAVEL"
-  -
+  - "SAND"
 
 update-interval: 20
 world-blacklist:

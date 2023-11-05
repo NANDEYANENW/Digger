@@ -217,7 +217,6 @@ public class Digger extends JavaPlugin implements Listener {
             this.saveConfig();
         }
 
-
     @EventHandler
         public void onBlockPlace (BlockPlaceEvent event){
             placedBlocks.add(event.getBlock().getLocation());
