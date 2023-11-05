@@ -214,30 +214,32 @@ public class Digger extends JavaPlugin implements Listener {
             this.saveConfig();
         }
 
-        private long parseTimeToTicks (String timeArg){
-            try {
-                int totalSeconds = 0;
-                // Match minutes and seconds
-                Matcher matcher = Pattern.compile("^((\\d+)m)?((\\d+)s)?$").matcher(timeArg);
-                if (matcher.matches()) {
-                    String minuteStr = matcher.group(2);
-                    String secondStr = matcher.group(4);
+    private long parseTimeToTicks (String timeArg){
+        try {
+            int totalSeconds = 0;
+            // Match minutes and seconds
+            // Change to \\d* to include 0 in the matching
+            Matcher matcher = Pattern.compile("^((\\d*)m)?((\\d*)s)?$").matcher(timeArg);
+            if (matcher.matches()) {
+                String minuteStr = matcher.group(2);
+                String secondStr = matcher.group(4);
 
-                    if (minuteStr != null) {
-                        totalSeconds += Integer.parseInt(minuteStr) * 60;
-                    }
-                    if (secondStr != null) {
-                        totalSeconds += Integer.parseInt(secondStr) * 1;
-                    }
-
-                    return totalSeconds * 20L; // Convert to ticks
+                if (minuteStr != null && !minuteStr.isEmpty()) {
+                    totalSeconds += Integer.parseInt(minuteStr) * 60;
                 }
-            } catch (NumberFormatException e) {
-                getLogger().warning("Invalid time format: " + timeArg);
+                if (secondStr != null && !secondStr.isEmpty()) {
+                    totalSeconds += Integer.parseInt(secondStr);
+                }
+
+                return totalSeconds * 20L; // Convert to ticks
             }
-            return -1; // Return -1 for invalid format
+        } catch (NumberFormatException e) {
+            getLogger().warning("Invalid time format: " + timeArg);
         }
-        @EventHandler
+        return -1; // Return -1 for invalid format
+    }
+
+    @EventHandler
         public void onBlockPlace (BlockPlaceEvent event){
             placedBlocks.add(event.getBlock().getLocation());
         }
