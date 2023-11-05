@@ -27,8 +27,8 @@ world-blacklist:
 rewardProbability: 0.02
 use-tool-money: true
 tools:
-  DIAMOND_PICKAXE: 250
-  DIAMOND_SHOVEL: 250
+  DIAMOND_PICKAXE: 200
+  DIAMOND_SHOVEL: 200
   GOLDEN_PICKAXE: 175
   GOLDEN_SHOVEL: 175
   IRON_PICKAXE: 150

@@ -3,11 +3,15 @@ package org.hotal.digger;
 
 
 
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class Commands implements CommandExecutor {
     private boolean isToolRewardEnabled = true;
@@ -91,9 +95,54 @@ public class Commands implements CommandExecutor {
                 return true;
             }
         }
+        if (command.getName().equalsIgnoreCase("set")) {
+            if (sender instanceof Player) {
+                if (!player.hasPermission("digger.set")) {
+                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                    return true;
+                }
+
+                // コマンドが 'set' の場合に適切な引数が提供されているかをチェック
+                if (args.length == 2) {
+                    String playerName = args[0];
+                    try {
+                        int newScore = Integer.parseInt(args[1]);
+                        OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(playerName);
+                        if (targetPlayer == null) {
+                            player.sendMessage("§c指定されたプレイヤーが見つかりません。");
+                            return true;
+                        }
+
+                        UUID targetUUID = targetPlayer.getUniqueId();
+                        // 新しいスコアを設定
+                        plugin.blockCount.put(targetUUID, newScore);
+                        // 全プレイヤーのスコアボードを更新
+                        plugin.updateAllPlayersScoreboard();
+                        player.sendMessage("§a" + playerName + "のスコアを" + newScore + "に設定しました。");
+                    } catch (NumberFormatException e) {
+                        player.sendMessage("§c無効なスコアです。数字を入力してください。");
+                    }
+                    return true;
+                } else {
+                    player.sendMessage("§c使用方法: /set <プレイヤー名> <新しいスコア>");
+                    return true;
+                }
+            } else {
+                sender.sendMessage("§cこのコマンドはプレイヤーのみが実行できます。");
+                return true;
+            }
+        }
         return false;
     }
 }
+
+
+
+
+
+
+
+
 
 
 

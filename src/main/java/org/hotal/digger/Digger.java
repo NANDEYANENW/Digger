@@ -2,6 +2,7 @@ package org.hotal.digger;
 import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -12,7 +13,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -37,7 +37,7 @@ public class Digger extends JavaPlugin implements Listener {
     public static double rewardProbability = 0.02;
 
     public ToolMoney toolMoney = new ToolMoney(getConfig(), this);
-    private final Map<UUID, Integer> blockCount = new HashMap<>();
+    public final Map<UUID, Integer> blockCount = new HashMap<>();
     private Scoreboard scoreboard;
     private Economy economy;
     private long scoreboardUpdateInterval = 20L;
@@ -75,8 +75,8 @@ public class Digger extends JavaPlugin implements Listener {
         loadToolRewards();
 
 
-        rewardMap.put(Material.DIAMOND_PICKAXE, 250);
-        rewardMap.put(Material.DIAMOND_SHOVEL, 250);
+        rewardMap.put(Material.DIAMOND_PICKAXE, 200);
+        rewardMap.put(Material.DIAMOND_SHOVEL, 200);
         rewardMap.put(Material.GOLDEN_PICKAXE, 175);
         rewardMap.put(Material.GOLDEN_SHOVEL, 175);
         rewardMap.put(Material.IRON_PICKAXE, 150);
@@ -143,6 +143,7 @@ public class Digger extends JavaPlugin implements Listener {
         getCommand("setprobability").setExecutor(commandExecutor);
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("tools").setExecutor(commandExecutor);
+        getCommand("set").setExecutor(commandExecutor);
 
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");

@@ -18,6 +18,11 @@ commands:
   tools:
     description: ツール別にお金を設定します。
     usage: /tools
+  set:
+      description: プレイヤー別にお金を設定します
+      usage: /set
+
+
 
 permissions:
   digger.debug:
@@ -31,4 +36,7 @@ permissions:
     default: op
   digger.tools:
     description: ツール別にお金を設定します。
+    default: op
+  digger.set:
+    description: プレイヤー別にお金を設定します。
     default: op
