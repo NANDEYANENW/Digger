@@ -22,6 +22,8 @@ block-blacklist:
   - "ROSE_BUSH"
   - "GRASS"
   - "GRASS_BLOCK"
+  - "GRAVEL"
+  -
 
 update-interval: 20
 world-blacklist:
