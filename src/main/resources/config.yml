@@ -22,11 +22,12 @@ block-blacklist:
   - "ROSE_BUSH"
   - "GRASS"
   - "GRASS_BLOCK"
+
 update-interval: 20
 world-blacklist:
   - world_nether
   - world_the_end
-rewardProbability: 0.02
+rewardProbability: 0.04
 use-tool-money: true
 tools:
   DIAMOND_PICKAXE: 200
