@@ -2,7 +2,6 @@ package org.hotal.digger;
 import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,7 +26,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
-
 
 public class Digger extends JavaPlugin implements Listener {
     public boolean isToolRewardEnabled = true;
@@ -65,7 +63,6 @@ public class Digger extends JavaPlugin implements Listener {
         return currentSetting;
     }
 
-
     @Override
     public void onEnable() { //起動時の初期化処理
         // Configファイルをロードまたは作成
@@ -73,7 +70,6 @@ public class Digger extends JavaPlugin implements Listener {
 
         // ツール報酬をロード
         loadToolRewards();
-
 
         rewardMap.put(Material.DIAMOND_PICKAXE, 200);
         rewardMap.put(Material.DIAMOND_SHOVEL, 200);
@@ -93,8 +89,6 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         File configFile = new File(getDataFolder(), "config.yml");
-
-
 
         reloadConfig();  // すでに存在する config.yml の内容を読み込む
 
@@ -133,9 +127,6 @@ public class Digger extends JavaPlugin implements Listener {
         startScoreboardUpdater();
 
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
-
-
-
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
@@ -252,7 +243,6 @@ public class Digger extends JavaPlugin implements Listener {
         }
         @EventHandler
         public void onBlockBreak (BlockBreakEvent event){
-
 
             Player player = event.getPlayer();
             Material toolType = player.getInventory().getItemInMainHand().getType();
@@ -428,9 +418,7 @@ public class Digger extends JavaPlugin implements Listener {
 
             }
         }
-
     }
-
 }
 
 

@@ -21,9 +21,6 @@ commands:
   set:
       description: プレイヤー別にお金を設定します
       usage: /set
-
-
-
 permissions:
   digger.debug:
     description: スコアボードをアップデートします（OP限定）。

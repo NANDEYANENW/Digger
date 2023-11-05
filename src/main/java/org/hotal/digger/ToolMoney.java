@@ -20,7 +20,6 @@ public class ToolMoney {
 
     public int getMoneyForTool(Material material) {
         int reward = config.getInt("tool-money." + material.name(), 50);
-        plugin.getLogger().info("[DEBUG] Material: " + material.name() + ", Reward: " + reward);  // ロガーを使用
         return reward;
     }
 
