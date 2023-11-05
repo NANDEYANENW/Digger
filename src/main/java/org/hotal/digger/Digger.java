@@ -71,6 +71,8 @@ public class Digger extends JavaPlugin implements Listener {
         // ツール報酬をロード
         loadToolRewards();
 
+        rewardMap.put(Material.NETHERITE_PICKAXE, 300);
+        rewardMap.put(Material.NETHERITE_SHOVEL, 300);
         rewardMap.put(Material.DIAMOND_PICKAXE, 200);
         rewardMap.put(Material.DIAMOND_SHOVEL, 200);
         rewardMap.put(Material.GOLDEN_PICKAXE, 175);
@@ -81,6 +83,7 @@ public class Digger extends JavaPlugin implements Listener {
         rewardMap.put(Material.STONE_SHOVEL, 100);
         rewardMap.put(Material.WOODEN_PICKAXE, 50);
         rewardMap.put(Material.WOODEN_SHOVEL, 50);
+
         FileConfiguration dataConfig;
         File dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
