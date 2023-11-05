@@ -212,7 +212,7 @@ public class Digger extends JavaPlugin implements Listener {
 
                 this.reloadConfig();
                 Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
-                player.sendMessage("§aconfig.ymlを再読み込みしました。");
+                player.sendMessage("§a config.ymlを再読み込みしました。");
                 return true;
             }
             return false;
