@@ -214,30 +214,6 @@ public class Digger extends JavaPlugin implements Listener {
             this.saveConfig();
         }
 
-    private long parseTimeToTicks (String timeArg){
-        try {
-            int totalSeconds = 0;
-            // Match minutes and seconds
-            // Change to \\d* to include 0 in the matching
-            Matcher matcher = Pattern.compile("^((\\d*)m)?((\\d*)s)?$").matcher(timeArg);
-            if (matcher.matches()) {
-                String minuteStr = matcher.group(2);
-                String secondStr = matcher.group(4);
-
-                if (minuteStr != null && !minuteStr.isEmpty()) {
-                    totalSeconds += Integer.parseInt(minuteStr) * 60;
-                }
-                if (secondStr != null && !secondStr.isEmpty()) {
-                    totalSeconds += Integer.parseInt(secondStr);
-                }
-
-                return totalSeconds * 20L; // Convert to ticks
-            }
-        } catch (NumberFormatException e) {
-            getLogger().warning("Invalid time format: " + timeArg);
-        }
-        return -1; // Return -1 for invalid format
-    }
 
     @EventHandler
         public void onBlockPlace (BlockPlaceEvent event){
