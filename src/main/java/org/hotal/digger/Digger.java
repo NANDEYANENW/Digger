@@ -115,6 +115,8 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         this.getServer().getPluginManager().registerEvents(this, this);
+
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -160,6 +162,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
             return true;
         }
+
 
         private void startScoreboardUpdater () {
             new BukkitRunnable() {
@@ -397,6 +400,8 @@ public class Digger extends JavaPlugin implements Listener {
 
             }
         }
+
+
     }
 }
 

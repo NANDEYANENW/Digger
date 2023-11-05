@@ -6,7 +6,7 @@
 
     <groupId>org.hotal</groupId>
     <artifactId>Digger</artifactId>
-    <version>3.6</version>
+    <version>3.6alpha</version>
     <packaging>jar</packaging>
 
     <name>Digger</name>
