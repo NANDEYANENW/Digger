@@ -70,8 +70,8 @@ public class Digger extends JavaPlugin implements Listener {
         // ツール報酬をロード
         loadToolRewards();
 
-        rewardMap.put(Material.NETHERITE_PICKAXE, 300);
-        rewardMap.put(Material.NETHERITE_SHOVEL, 300);
+        rewardMap.put(Material.NETHERITE_PICKAXE, 250);
+        rewardMap.put(Material.NETHERITE_SHOVEL, 250);
         rewardMap.put(Material.DIAMOND_PICKAXE, 200);
         rewardMap.put(Material.DIAMOND_SHOVEL, 200);
         rewardMap.put(Material.GOLDEN_PICKAXE, 175);
@@ -218,106 +218,119 @@ public class Digger extends JavaPlugin implements Listener {
             this.getConfig().set("scoreboardUpdateInterval", interval);
             this.saveConfig();
         }
-        
+
     @EventHandler
-        public void onBlockPlace (BlockPlaceEvent event){
-            placedBlocks.add(event.getBlock().getLocation());
-        }
-        @EventHandler
-        public void onBlockBreak (BlockBreakEvent event){
+    public void onBlockPlace(BlockPlaceEvent event) {
+        placedBlocks.add(event.getBlock().getLocation());
+    }
 
-            Player player = event.getPlayer();
-            Material toolType = player.getInventory().getItemInMainHand().getType();
-
-// isToolRewardEnabled をチェックして、報酬の額を決定する
-            Integer toolReward;
-            if (isToolRewardEnabled) {
-                toolReward = rewardMap.getOrDefault(toolType, 50);
-            } else {
-                toolReward = 50;
-            }
-
-
-            if (worldBlacklist.contains(player.getWorld().getName())) {
-                return;
-            }
-
-            Location blockLoc = event.getBlock().getLocation();
-            if (placedBlocks.contains(blockLoc)) {
-                placedBlocks.remove(blockLoc);
-                return;
-            }
-
-            List<String> blacklist = this.getConfig().getStringList("block-blacklist");
-            if (blacklist.contains(event.getBlock().getType().name())) {
-                return;
-            }
-
-            if (scoreboard == null || objective == null) {
-                return;
-            }
-
-            UUID playerID = player.getUniqueId();
-            blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
-
-            if (Math.random() < rewardProbability) {
-                economy.depositPlayer(player, toolReward);
-                player.sendMessage("§a " + toolReward + "NANDEを手に入れました。");
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-            }
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (worldBlacklist.contains(player.getWorld().getName()) ||
+                placedBlocks.remove(event.getBlock().getLocation()) ||
+                isBlockBlacklisted(event.getBlock().getType())) {
+            return;
         }
 
+        updateBlockCount(player);
+        giveReward(player);
+    }
 
-        public void updateAllPlayersScoreboard () {
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        saveData();
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        loadData();
+    }
+
+    private void updateBlockCount(Player player) {
+        UUID playerID = player.getUniqueId();
+        blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
+    }
+
+    private void giveReward(Player player) {
+        Material toolType = player.getInventory().getItemInMainHand().getType();
+        Integer toolReward = isToolRewardEnabled ? rewardMap.getOrDefault(toolType, 50) : 50;
+        if (Math.random() < rewardProbability) {
+            economy.depositPlayer(player, toolReward);
+            player.sendMessage("§a " + toolReward + "NANDEを手に入れました。");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
+        }
+    }
+
+    private boolean isBlockBlacklisted(Material material) {
+        List<String> blacklist = getConfig().getStringList("block-blacklist");
+        return blacklist.contains(material.name());
+    }
+
+
+    public void updateAllPlayersScoreboard () {
             // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
-            for (UUID uuid : blockCount.keySet()) {
-                Player player = Bukkit.getPlayer(uuid);
-                if (player != null) {
-                    updateScoreboard(uuid, player);
-                }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updateScoreboard(player);
+        }
+        }
+    public void updateScoreboard(Player viewingPlayer) {
+
+        // トップ10の整地の順位表示用のスコアボード
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("stats", "dummy", "整地の順位");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
+                .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+
+        int rank = 1; // ランクを数えるための変数
+        for (Map.Entry<UUID, Integer> entry : sortedList) {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+            String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
+            int score = entry.getValue();
+            objective.getScore(listedPlayerName).setScore(score);
+
+            // プレイヤー自身のランキングとブロック数を表示
+            if(entry.getKey().equals(viewingPlayer.getUniqueId())) {
+                displayPlayerStats(objective, rank, score);
             }
-        }
-        public void updateScoreboard (UUID viewingPlayerUUID, Player viewingPlayer) {
-            // トップ10の整地の順位表示用のスコアボード
-            Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-            Objective objective = scoreboard.registerNewObjective("stats", "dummy", "整地の順位");
-            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-            List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
-                    .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
-                    .limit(10)
-                    .collect(Collectors.toList());
-
-            for (Map.Entry<UUID, Integer> entry : sortedList) {
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-                if (offlinePlayer == null || offlinePlayer.getName() == null) {
-                    continue; // nullの場合は処理をスキップ
-                }
-                String listedPlayerName = offlinePlayer.getName();
-                int score = entry.getValue();
-                objective.getScore(listedPlayerName).setScore(score);
-
-                int viewerScore = blockCount.getOrDefault(viewingPlayerUUID, 0);
-                int viewerRank = sortedList.indexOf(new AbstractMap.SimpleEntry<>(viewingPlayerUUID, viewerScore)) + 1;
-                String rankDisplay = "§6あなたの順位: " + viewerRank + "位";
-                objective.getScore(rankDisplay).setScore(-1);
-
-                String blocksDugDisplay = "§a掘ったブロック数:" + viewerScore + "ブロック";
-                objective.getScore(blocksDugDisplay).setScore(-2);
-
-                viewingPlayer.setScoreboard(scoreboard);
-            }
+            rank++;
         }
 
-        @EventHandler
-        public void onPlayerQuit (PlayerQuitEvent event){
-            saveData();
+        // プレイヤーがトップ10に入っていない場合、スコアボードに表示
+        if(!sortedList.stream().anyMatch(e -> e.getKey().equals(viewingPlayer.getUniqueId()))) {
+            int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), 0);
+            displayPlayerStats(objective, -1, viewerScore); // ランクがない場合は -1 を使用
         }
-        @EventHandler
-        public void onPlayerJoin (PlayerJoinEvent event){
-            loadData();
-        }
-        @Override
+
+        // プレイヤーの現在の座標を表示
+        displayPlayerLocation(objective, viewingPlayer.getLocation());
+
+        // スコアボードを設定
+        viewingPlayer.setScoreboard(scoreboard);
+    }
+
+    private void displayPlayerStats(Objective objective, int rank, int score) {
+        String rankDisplay = rank == -1 ? "§6順位: 参加していません" : "§6あなたの順位: " + rank + "位";
+        String blocksDugDisplay = "§a掘ったブロック数: " + score + " ブロック";
+        objective.getScore(rankDisplay).setScore(-1);
+        objective.getScore(blocksDugDisplay).setScore(-2);
+    }
+
+    private void displayPlayerLocation(Objective objective, Location location) {
+        String locationDisplay = String.format("§f座標: §cX: %d Y: %d Z: %d",
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ());
+        objective.getScore(locationDisplay).setScore(-3);
+    }
+
+
+
+    @Override
         public void onDisable () {
             saveData();
             getConfig().set("update-interval", scoreboardUpdateInterval);
