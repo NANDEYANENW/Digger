@@ -38,5 +38,5 @@ permissions:
     description: ツール別にお金を設定します。
     default: op
   digger.set:
-    description: プレイヤー別にお金を設定します。
+    description: プレイヤー別に強制的に掘ったブロックを設定します。
     default: op
