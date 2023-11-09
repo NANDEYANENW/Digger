@@ -19,7 +19,7 @@ commands:
     description: ツール別にお金を設定します。
     usage: /tools
   set:
-      description: プレイヤー別にお金を設定します
+      description: プレイヤー別に強制的に掘ったブロックを設定します
       usage: /set
   sb:
     description: スコアボードを表示、非表示にします。
