@@ -12,6 +12,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -28,6 +29,8 @@ import java.io.IOException;
 
 public class Digger extends JavaPlugin implements Listener {
     public boolean isToolRewardEnabled = true;
+
+    private final Map<UUID, Boolean> scoreboardToggles = new HashMap<>();
     private static Digger instance;
     private Boolean currentSetting = null;
 
@@ -145,79 +148,106 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-        private boolean setupEconomy () {
-            if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().warning("§4エラー：Vaultプラグインが見つかりませんでした。");
-                return false;
+    private boolean setupEconomy() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().warning("§4エラー：Vaultプラグインが見つかりませんでした。");
+            return false;
+        }
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            getLogger().warning("§4エラー:Economyサービスプロバイダが登録されていません。");
+            return false;
+        }
+        economy = rsp.getProvider();
+        if (economy == null) {
+            getLogger().warning("§4エラー：Economyサービスが見つかりません。");
+            return false;
+        }
+        return true;
+    }
+
+
+    private void startScoreboardUpdater() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateAllPlayersScoreboard();
             }
-            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-            if (rsp == null) {
-                getLogger().warning("§4エラー:Economyサービスプロバイダが登録されていません。");
-                return false;
-            }
-            economy = rsp.getProvider();
-            if (economy == null) {
-                getLogger().warning("§4エラー：Economyサービスが見つかりません。");
-                return false;
-            }
+        }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
 
+        Player player = (Player) sender;
 
-        private void startScoreboardUpdater () {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    updateAllPlayersScoreboard();
-                }
-            }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
-        }
+        if (cmd.getName().equalsIgnoreCase("setprobability")) {
+            double newProbability;
 
-        @Override
-        public boolean onCommand (CommandSender sender, Command cmd, String label, String[]args){
-
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
+            try {
+                newProbability = Double.parseDouble(args[0]);
+            } catch (NumberFormatException e) {
+                player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
                 return true;
             }
 
-            Player player = (Player) sender;
-
-            if (cmd.getName().equalsIgnoreCase("setprobability")) {
-                double newProbability;
-
-                try {
-                    newProbability = Double.parseDouble(args[0]);
-                } catch (NumberFormatException e) {
-                    player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
-                    return true;
-                }
-
-                if (newProbability >= 0.0 && newProbability <= 1.0) {
-                    Digger.rewardProbability = newProbability;
-                    this.getConfig().set("rewardProbability", newProbability);
-                    this.saveConfig();
-                    player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
-                    return true;
-                }
-            } else if (cmd.getName().equalsIgnoreCase("reload")) {
-                if (!player.hasPermission("digger.reload")) {
-                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                    return true;
-                }
-
-                this.reloadConfig();
-                Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04);
-                player.sendMessage("§a config.ymlを再読み込みしました。");
+            if (newProbability >= 0.0 && newProbability <= 1.0) {
+                Digger.rewardProbability = newProbability;
+                this.getConfig().set("rewardProbability", newProbability);
+                this.saveConfig();
+                player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
                 return true;
             }
-            return false;
+        } else if (cmd.getName().equalsIgnoreCase("reload")) {
+            if (!player.hasPermission("digger.reload")) {
+                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
+
+            this.reloadConfig();
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04);
+            player.sendMessage("§a config.ymlを再読み込みしました。");
+            return true;
+        }
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみが実行できます。");
+            return true;
         }
 
-        private void saveUpdateIntervalToConfig ( long interval){
-            this.getConfig().set("scoreboardUpdateInterval", interval);
-            this.saveConfig();
+        // コマンドが'digger:scoreboard'であるかを確認
+        if (cmd.getName().equalsIgnoreCase("sb")) {
+            // 引数が'on'または'off'であるかを確認
+            if (args.length == 1) {
+                if (args[0].equalsIgnoreCase("on")) {
+                    // スコアボードをオンにする
+                    scoreboardToggles.put(player.getUniqueId(), true);
+                    updateScoreboard(player); // これはあなたのスコアボードを更新するメソッドです
+                    player.sendMessage(ChatColor.GREEN + "スコアボードを表示しました。");
+                } else if (args[0].equalsIgnoreCase("off")) {
+                    // スコアボードをオフにする
+                    scoreboardToggles.put(player.getUniqueId(), false);
+                    player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+                    player.sendMessage(ChatColor.GREEN + "スコアボードを非表示にしました。");
+                } else {
+                    player.sendMessage(ChatColor.RED + "無効な引数です。使用法: /digger:scoreboard <on/off>");
+                }
+                return true;
+            }
         }
+
+        return false;
+    }
+
+
+    private void saveUpdateIntervalToConfig(long interval) {
+        this.getConfig().set("scoreboardUpdateInterval", interval);
+        this.saveConfig();
+    }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -268,66 +298,66 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-    public void updateAllPlayersScoreboard () {
-            // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
+    public void updateAllPlayersScoreboard() {
+        // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateScoreboard(player);
         }
-        }
+    }
+
     public void updateScoreboard(Player viewingPlayer) {
-        // スコアボードのセットアップ
-        Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.BOLD + "整地の順位");
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // ソートされたリストを取得
-        List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
-                .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
-                .limit(10)
-                .collect(Collectors.toList());
+        Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
+        if (showScoreboard) {
 
-        // プレイヤーのランクを決定
-        int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), 0);
-        int viewerRank = sortedList.stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList())
-                .indexOf(viewingPlayer.getUniqueId()) + 1;
+            // スコアボードのセットアップ
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.LIGHT_PURPLE + "整地の順位");
+            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // トップ10プレイヤーをスコアボードに表示
-        for (int i = 0; i < sortedList.size(); i++) {
-            Map.Entry<UUID, Integer> entry = sortedList.get(i);
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-            String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
-            objective.getScore(listedPlayerName).setScore(entry.getValue());
+            // ソートされたリストを取得
+            List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
+                    .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+                    .limit(10)
+                    .collect(Collectors.toList());
+
+            // プレイヤーのランクを決定
+            int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), 0);
+            int viewerRankIndex = sortedList.stream()
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList())
+                    .indexOf(viewingPlayer.getUniqueId());
+            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+
+            // トップ10プレイヤーをスコアボードに表示
+            for (int i = 0; i < sortedList.size(); i++) {
+                Map.Entry<UUID, Integer> entry = sortedList.get(i);
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
+                objective.getScore(listedPlayerName).setScore(entry.getValue());
+            }
+
+            // 空行
+            objective.getScore(" ").setScore(1);
+
+            objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
+            objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
+
+            // プレイヤーの座標を表示
+            Location location = viewingPlayer.getLocation();
+            String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
+                    "X:" + location.getBlockX() +
+                    " Y:" + location.getBlockY() +
+                    " Z:" + location.getBlockZ();
+            objective.getScore(locationDisplay).setScore(-2);
+
+            // スコアボードをプレイヤーに適用
+            viewingPlayer.setScoreboard(scoreboard);
         }
-
-        // 空行
-        objective.getScore(" ").setScore(-1);
-
-        // プレイヤー自身のスコアとランクを表示
-        String rankDisplay = ChatColor.GOLD + "あなたの順位: " + (viewerRank == 0 ? "N/A" : viewerRank + "位");
-        String blocksDugDisplay = ChatColor.GREEN + "掘ったブロック数: " + (viewerScore + "ブロック");
-        objective.getScore(rankDisplay).setScore(-2);
-        objective.getScore(blocksDugDisplay).setScore(-3);
-
-        // もう一つの空行
-        objective.getScore("   ").setScore(-4);
-
-        // プレイヤーの座標を表示
-        Location location = viewingPlayer.getLocation();
-        String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
-                " X: " + location.getBlockX() +
-                " Y: " + location.getBlockY() +
-                " Z: " + location.getBlockZ();
-        objective.getScore(locationDisplay).setScore(-5);
-
-        // スコアボードをプレイヤーに適用
-        viewingPlayer.setScoreboard(scoreboard);
     }
 
 
-
-    @Override
+        @Override
         public void onDisable () {
             saveData();
             getConfig().set("update-interval", scoreboardUpdateInterval);
@@ -390,30 +420,30 @@ public class Digger extends JavaPlugin implements Listener {
             return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
         }
 
-    private void loadToolRewards() {
-        // "tools"セクションを取得
-        ConfigurationSection toolsSection = getConfig().getConfigurationSection("tools");
+        private void loadToolRewards () {
+            // "tools"セクションを取得
+            ConfigurationSection toolsSection = getConfig().getConfigurationSection("tools");
 
-        if (toolsSection == null) {
+            if (toolsSection == null) {
 
-            return;
-        }
+                return;
+            }
 
-        // セクション内の全てのキーと値を取得してrewardMapに保存
-        for (String key : toolsSection.getKeys(false)) {
-            Material material = Material.getMaterial(key);
-            int reward = toolsSection.getInt(key);
+            // セクション内の全てのキーと値を取得してrewardMapに保存
+            for (String key : toolsSection.getKeys(false)) {
+                Material material = Material.getMaterial(key);
+                int reward = toolsSection.getInt(key);
 
-            if (material != null) {
-                rewardMap.put(material, reward);
-            } else {
+                if (material != null) {
+                    rewardMap.put(material, reward);
+                } else {
 
+                }
             }
         }
-
-
     }
-}
+
+
 
 
 
