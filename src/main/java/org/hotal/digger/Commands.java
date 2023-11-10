@@ -40,6 +40,10 @@ public class Commands implements CommandExecutor {
             player.sendMessage("§a スコアボードをアップデートしました。");
             return true;
         } else if (cmdName.equalsIgnoreCase("setprobability")) {
+            if (!player.hasPermission("digger.setprobability")) {
+                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
             plugin.saveConfig();
             plugin.reloadConfig();
             FileConfiguration config = plugin.getConfig();  // getConfigの戻り値を利用する場合は変数に格納
@@ -61,13 +65,14 @@ public class Commands implements CommandExecutor {
                 player.sendMessage("§a 確率を更新しました: " + Digger.rewardProbability);
                 return true;
             }
+
         } else if (cmdName.equalsIgnoreCase("reload")) {
             if (!player.hasPermission("digger.reload")) {
                 player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
             plugin.reloadConfig();  // こちらも変更
-            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.5);  // こちらも変更
+            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.04);  // こちらも変更
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
         } else if (cmdName.equalsIgnoreCase("tools")) {
@@ -128,9 +133,11 @@ public class Commands implements CommandExecutor {
                 return true;
             }
         }
+
         return false;
     }
 }
+
 
 
 

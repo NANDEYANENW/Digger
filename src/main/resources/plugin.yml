@@ -16,14 +16,17 @@ commands:
     description: 設定を再読み込みします。
     usage: /reload
   tools:
-    description: ツール別にお金を設定します。
+    description: ツール別の報酬を有効、無効化します。
     usage: /tools
   set:
-      description: プレイヤー別に強制的に掘ったブロックを設定します
+      description: プレイヤー別に強制的に掘ったブロックを設定します。
       usage: /set
   sb:
     description: スコアボードを表示、非表示にします。
     usage: /sb <on/off>
+  sutm:
+    description: config.ymlのuse-tool-moneyの有効/無効を強制的に切り替えます。
+    usage: /sutm <true/false>
 permissions:
   digger.debug:
     description: スコアボードをアップデートします（OP限定）。
@@ -39,4 +42,7 @@ permissions:
     default: op
   digger.set:
     description: プレイヤー別に強制的に掘ったブロックを設定します。
+    default: op
+  digger.sutm:
+    description: config.ymlのuse-tool-moneyの有効/無効を強制的に切り替えます。
     default: op
