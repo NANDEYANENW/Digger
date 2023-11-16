@@ -306,13 +306,20 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         @EventHandler
-        public void onPlayerJoin (PlayerJoinEvent event){
+        public void onPlayerJoin (PlayerJoinEvent event) {
+            saveData();
+            try {
+                wait(10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             loadData();
         }
 
         private void updateBlockCount (Player player){
             UUID playerID = player.getUniqueId();
             blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
+
         }
 
         private void giveReward (Player player){
