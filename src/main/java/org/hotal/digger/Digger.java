@@ -305,16 +305,21 @@ public class Digger extends JavaPlugin implements Listener {
             saveData();
         }
 
-        @EventHandler
-        public void onPlayerJoin (PlayerJoinEvent event) {
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             saveData();
             try {
-                wait(10);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             loadData();
-        }
+            Bukkit.getScheduler().runTask(this, () -> {
+
+            });
+        });
+    }
 
         private void updateBlockCount (Player player){
             UUID playerID = player.getUniqueId();
