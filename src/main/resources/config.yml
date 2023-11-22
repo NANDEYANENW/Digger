@@ -22,12 +22,15 @@ block-blacklist:
   - "ROSE_BUSH"
   - "GRASS"
   - "SAND"
+  - "FIRE"
+  - "SUGAR_CANE"
+  -
 
 update-interval: 20
 world-blacklist:
   - world_nether
   - world_the_end
-rewardProbability: 0.04
+rewardProbability: 0.03
 use-tool-money: true
 tools:
   NETHERITE_PICKAXE: 250
