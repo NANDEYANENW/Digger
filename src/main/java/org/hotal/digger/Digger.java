@@ -139,7 +139,7 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04); //4%
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
@@ -224,7 +224,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
 
             this.reloadConfig();
-            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04);
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03);
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
         }
