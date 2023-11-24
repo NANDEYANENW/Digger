@@ -146,7 +146,6 @@ public class Digger extends JavaPlugin implements Listener {
         getCommand("updatescoreboard").setExecutor(commandExecutor);
         getCommand("setprobability").setExecutor(commandExecutor);
         getCommand("reload").setExecutor(commandExecutor);
-        getCommand("tools").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
 
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
