@@ -72,29 +72,9 @@ public class Commands implements CommandExecutor {
                 return true;
             }
             plugin.reloadConfig();  // こちらも変更
-            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.04);  // こちらも変更
+            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.03);  // こちらも変更
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
-        } else if (cmdName.equalsIgnoreCase("tools")) {
-            if (!player.hasPermission("digger.tools")) {
-                player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
-                return true;
-            }
-            if (args.length == 0) {
-                player.sendMessage("§c 引数を指定してください。例: /digger:tools on");
-                return true;
-            }
-            if (args[0].equalsIgnoreCase("on")) {
-                Digger.getInstance().isToolRewardEnabled = true;
-                sender.sendMessage("ツール別の報酬が有効になりました。");
-
-                return true;
-            } else if (args[0].equalsIgnoreCase("off")) {
-                Digger.getInstance().isToolRewardEnabled = false;
-                sender.sendMessage("ツール別の報酬が無効になりました。");
-
-                return true;
-            }
         }
         if (command.getName().equalsIgnoreCase("set")) {
             if (sender instanceof Player) {
