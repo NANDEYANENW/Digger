@@ -15,9 +15,6 @@ commands:
   reload:
     description: 設定を再読み込みします。
     usage: /reload
-  tools:
-    description: ツール別の報酬を有効、無効化します。
-    usage: /tools
   set:
       description: プレイヤー別に強制的に掘ったブロックを設定します。
       usage: /set
@@ -36,9 +33,6 @@ permissions:
     default: op
   digger.reload:
     description: 設定を再読み込みします。
-    default: op
-  digger.tools:
-    description: ツール別にお金を設定します。
     default: op
   digger.set:
     description: プレイヤー別に強制的に掘ったブロックを設定します。

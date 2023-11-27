@@ -22,6 +22,9 @@ block-blacklist:
   - "ROSE_BUSH"
   - "GRASS"
   - "SAND"
+  - "FIRE"
+  - "SUGAR_CANE"
+  -
 
 update-interval: 20
 world-blacklist:
