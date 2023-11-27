@@ -72,7 +72,7 @@ public class Commands implements CommandExecutor {
                 return true;
             }
             plugin.reloadConfig();  // こちらも変更
-            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.04);  // こちらも変更
+            Digger.rewardProbability = plugin.getConfig().getDouble("rewardProbability", 0.03);  // こちらも変更
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
         } else if (cmdName.equalsIgnoreCase("tools")) {

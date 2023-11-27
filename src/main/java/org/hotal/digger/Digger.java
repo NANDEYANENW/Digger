@@ -22,7 +22,10 @@ import org.bukkit.Material;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.hotal.digger.sql.DatabaseManager;
+import org.hotal.digger.sql.PointsDatabase;
 
+import java.sql.SQLException;
 import java.util.*;
 
 import java.util.stream.Collectors;
@@ -38,7 +41,7 @@ public class Digger extends JavaPlugin implements Listener {
     private static Digger instance;
     private Boolean currentSetting = null;
 
-    public static double rewardProbability = 0.04;
+    public static double rewardProbability = 0.03;
 
     public ToolMoney toolMoney = new ToolMoney(getConfig(), this);
     public final Map<UUID, Integer> blockCount = new HashMap<>();
@@ -72,6 +75,7 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onEnable() { //起動時の初期化処理
         // Configファイルをロードまたは作成
+
         saveDefaultConfig();
 
         useToolMoney = getConfig().getBoolean("use-tool-money", true);
@@ -107,6 +111,17 @@ public class Digger extends JavaPlugin implements Listener {
 
         YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
         this.dataConfig = yamlConfiguration;
+        try {
+
+            if (!getDataFolder().exists()) {
+                getDataFolder().mkdirs();
+            }
+
+            pointsDatabase = new PointsDatabase(getDataFolder().getAbsolutePath() + "/Database.db")
+
+        }catch (SQLException ex){
+            ex.printStackTrace();
+        }
 
         scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
         worldBlacklist = getConfig().getStringList("world-blacklist");
@@ -139,7 +154,7 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04); //4%
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
@@ -224,7 +239,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
 
             this.reloadConfig();
-            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.04);
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03);
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
         }
