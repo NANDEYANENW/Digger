@@ -22,7 +22,6 @@ import org.bukkit.Material;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.hotal.digger.sql.DatabaseManager;
 import org.hotal.digger.sql.PointsDatabase;
 
 import java.sql.SQLException;
@@ -42,6 +41,7 @@ public class Digger extends JavaPlugin implements Listener {
     private Boolean currentSetting = null;
 
     public static double rewardProbability = 0.03;
+
 
     public ToolMoney toolMoney = new ToolMoney(getConfig(), this);
     public final Map<UUID, Integer> blockCount = new HashMap<>();
@@ -74,99 +74,142 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() { //起動時の初期化処理
-        // Configファイルをロードまたは作成
+        pointsDatabase = new PointsDatabase();
 
-        saveDefaultConfig();
-
-        useToolMoney = getConfig().getBoolean("use-tool-money", true);
-
-        // ツール報酬をロード
-        loadToolRewards();
-
-        rewardMap.put(Material.NETHERITE_PICKAXE, 250);
-        rewardMap.put(Material.NETHERITE_SHOVEL, 250);
-        rewardMap.put(Material.DIAMOND_PICKAXE, 200);
-        rewardMap.put(Material.DIAMOND_SHOVEL, 200);
-        rewardMap.put(Material.GOLDEN_PICKAXE, 175);
-        rewardMap.put(Material.GOLDEN_SHOVEL, 175);
-        rewardMap.put(Material.IRON_PICKAXE, 150);
-        rewardMap.put(Material.IRON_SHOVEL, 150);
-        rewardMap.put(Material.STONE_PICKAXE, 100);
-        rewardMap.put(Material.STONE_SHOVEL, 100);
-        rewardMap.put(Material.WOODEN_PICKAXE, 50);
-        rewardMap.put(Material.WOODEN_SHOVEL, 50);
-
-        FileConfiguration dataConfig;
-        File dataFile = new File(getDataFolder(), "player-data.yml");
-        if (!dataFile.exists()) {
-            dataFile.getParentFile().mkdirs();
-            saveResource("player-data.yml", false);
-        }
-
-        File configFile = new File(getDataFolder(), "config.yml");
-
-        reloadConfig();  // すでに存在する config.yml の内容を読み込む
-
-        toolMoney = new ToolMoney(getConfig(), this);
-
-        YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
-        this.dataConfig = yamlConfiguration;
+        // データベース接続のオープン
         try {
-
-            if (!getDataFolder().exists()) {
-                getDataFolder().mkdirs();
-            }
-
-            pointsDatabase = new PointsDatabase(getDataFolder().getAbsolutePath() + "/Database.db")
-
-        }catch (SQLException ex){
-            ex.printStackTrace();
-        }
-
-        scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
-        worldBlacklist = getConfig().getStringList("world-blacklist");
-
-        if (!setupEconomy()) { // 起動時のVault関係があるかどうか
-            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
-
-            if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                getLogger().severe("エラー：Vaultプラグインが見つかりません。");
-            } else {
-                getLogger().severe("エラー：Economyサービスプロバイダが見つかりません。");
-            }
+            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
+        } catch (SQLException e) {
+            getLogger().severe("データベース接続の際にエラーが発生しました: " + e.getMessage());
+            // 必要に応じてプラグインを無効化
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+            // Configファイルをロードまたは作成
+            saveDefaultConfig();
 
-        this.getServer().getPluginManager().registerEvents(this, this);
+            PointsDatabase pointsDatabase = new PointsDatabase();
+
+            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
 
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                // スコアボードの初期化
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
-                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                loadData(); // player-data.ymlの中身を読み込む。
+            try {
+                pointsDatabase.saveData(blockCount, placedBlocks);
+            } catch (SQLException e) {
+                getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
+            }
+
+
+            useToolMoney = getConfig().getBoolean("use-tool-money", true);
+
+            // ツール報酬をロード
+            loadToolRewards();
+
+            rewardMap.put(Material.NETHERITE_PICKAXE, 250);
+            rewardMap.put(Material.NETHERITE_SHOVEL, 250);
+            rewardMap.put(Material.DIAMOND_PICKAXE, 200);
+            rewardMap.put(Material.DIAMOND_SHOVEL, 200);
+            rewardMap.put(Material.GOLDEN_PICKAXE, 175);
+            rewardMap.put(Material.GOLDEN_SHOVEL, 175);
+            rewardMap.put(Material.IRON_PICKAXE, 150);
+            rewardMap.put(Material.IRON_SHOVEL, 150);
+            rewardMap.put(Material.STONE_PICKAXE, 100);
+            rewardMap.put(Material.STONE_SHOVEL, 100);
+            rewardMap.put(Material.WOODEN_PICKAXE, 50);
+            rewardMap.put(Material.WOODEN_SHOVEL, 50);
+
+            FileConfiguration dataConfig;
+            dataFile = new File(getDataFolder(), "player-data.yml");
+            if (!dataFile.exists()) {
+                dataFile.getParentFile().mkdirs();
+                saveResource("player-data.yml", false);
+            }
+            dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+
+            File configFile = new File(getDataFolder(), "config.yml");
+
+            reloadConfig();  // すでに存在する config.yml の内容を読み込む
+
+            toolMoney = new ToolMoney(getConfig(), this);
+
+            YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
+            this.dataConfig = yamlConfiguration;
+            scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
+            worldBlacklist = getConfig().getStringList("world-blacklist");
+
+            if (!setupEconomy()) { // 起動時のVault関係があるかどうか
+                getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+
+                if (getServer().getPluginManager().getPlugin("Vault") == null) {
+                    getLogger().severe("エラー：Vaultプラグインが見つかりません。");
+                } else {
+                    getLogger().severe("エラー：Economyサービスプロバイダが見つかりません。");
+                }
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+
+            this.getServer().getPluginManager().registerEvents(this, this);
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    // スコアボードの初期化
+                    scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                    objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
+                    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                    loadData(); // player-data.ymlの中身を読み込む。
+
+                }
+            }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+            startScoreboardUpdater();
+
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
+
+            ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
+            Commands commandExecutor = new Commands(this, toolMoneyInstance);
+            getCommand("updatescoreboard").setExecutor(commandExecutor);
+            getCommand("setprobability").setExecutor(commandExecutor);
+            getCommand("reload").setExecutor(commandExecutor);
+            getCommand("set").setExecutor(commandExecutor);
+
+            if (this.getConfig().contains("scoreboardUpdateInterval")) {
+                scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
 
             }
-        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
-        startScoreboardUpdater();
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
 
-        ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
-        Commands commandExecutor = new Commands(this, toolMoneyInstance);
-        getCommand("updatescoreboard").setExecutor(commandExecutor);
-        getCommand("setprobability").setExecutor(commandExecutor);
-        getCommand("reload").setExecutor(commandExecutor);
-        getCommand("set").setExecutor(commandExecutor);
 
-        if (this.getConfig().contains("scoreboardUpdateInterval")) {
-            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+    }
+    // データの保存
+    public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
+        try {
+            pointsDatabase.saveData(blockCount, placedBlocks);
+        } catch (SQLException e) {
+            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルにフォールバックします: " + e.getMessage());
+            saveToYaml(blockCount, placedBlocks);
         }
     }
+
+    private void saveToYaml(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
+        // blockCount の保存
+        for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
+            dataConfig.set("blockCount." + entry.getKey().toString(), entry.getValue());
+        }
+
+        // placedBlocks の保存 (リスト内の各 Location オブジェクトを文字列に変換して保存)
+        List<String> blockLocStrings = placedBlocks.stream()
+                .map(loc -> loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ())
+                .collect(Collectors.toList());
+        dataConfig.set("placedBlocks", blockLocStrings);
+
+        try {
+            dataConfig.save(dataFile);
+        } catch (IOException e) {
+            getLogger().severe("YAMLファイルへの保存中にエラーが発生しました: " + e.getMessage());
+        }
+    }
+
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -335,7 +378,7 @@ public class Digger extends JavaPlugin implements Listener {
         });
     }
 
-        private void updateBlockCount (Player player){
+        public void updateBlockCount (Player player){
             UUID playerID = player.getUniqueId();
             blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
 
@@ -425,7 +468,7 @@ public class Digger extends JavaPlugin implements Listener {
             saveConfig();
 
         }
-        private void loadData () {
+        public void loadData () {
             dataFile = new File(getDataFolder(), "player-data.yml");
             if (!dataFile.exists()) {
                 saveResource("player-data.yml", false);
@@ -456,28 +499,32 @@ public class Digger extends JavaPlugin implements Listener {
             int z = Integer.parseInt(parts[3]);
             return new Location(world, x, y, z);
         }
-        private void saveData () {
-            if (dataConfig == null) {
-
-                return;
-            }
+    public void saveData() {
+        // YAMLファイルに保存
+        if (dataConfig != null) {
             for (UUID uuid : blockCount.keySet()) {
                 dataConfig.set("blockCount." + uuid.toString(), blockCount.get(uuid));
             }
-            try {
-                dataConfig.save(dataFile);
-            } catch (IOException e) {
-                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。 " + e.getMessage());
-            }
+
             List<String> blockLocStrings = placedBlocks.stream().map(this::locationToString).collect(Collectors.toList());
             dataConfig.set("placedBlocks", blockLocStrings);
+
             try {
                 dataConfig.save(dataFile);
             } catch (IOException e) {
                 getLogger().severe("§aデータファイルの保存中にエラーが発生しました。" + e.getMessage());
             }
         }
-        private String locationToString (Location loc){
+
+        // SQLiteデータベースに保存
+        try {
+            PointsDatabase.saveData(blockCount, placedBlocks); // このメソッドはPointsDatabaseクラスに実装する必要があります
+        } catch (SQLException e) {
+            getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
+        }
+    }
+
+    private String locationToString (Location loc){
             return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
         }
 
