@@ -32,6 +32,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class Digger extends JavaPlugin implements Listener {
+    private PointsDatabase pointsDatabase;
+    private FileConfiguration dataConfig;
+    private File dataFile;
+
     public boolean isToolRewardEnabled = true;
 
     private boolean useToolMoney;
@@ -50,8 +54,7 @@ public class Digger extends JavaPlugin implements Listener {
     private long scoreboardUpdateInterval = 20L;
     private Objective objective;
     private final Map<Material, Integer> rewardMap = new HashMap<>();
-    private File dataFile;
-    private FileConfiguration dataConfig;
+
 
     private final List<Location> placedBlocks = new ArrayList<>();
     private List<String> worldBlacklist = new ArrayList<>();
@@ -80,104 +83,105 @@ public class Digger extends JavaPlugin implements Listener {
         try {
             pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
         } catch (SQLException e) {
-            getLogger().severe("データベース接続の際にエラーが発生しました: " + e.getMessage());
+            getLogger().severe("データベース接続時にエラーが発生しました: " + e.getMessage());
             // 必要に応じてプラグインを無効化
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-            // Configファイルをロードまたは作成
-            saveDefaultConfig();
+        // Configファイルをロードまたは作成
+        saveDefaultConfig();
 
-            PointsDatabase pointsDatabase = new PointsDatabase();
+        pointsDatabase = new PointsDatabase();
 
+        try {
             pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            pointsDatabase.saveData(blockCount, placedBlocks);
+        } catch (SQLException e) {
+            getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
+        }
 
 
-            try {
-                pointsDatabase.saveData(blockCount, placedBlocks);
-            } catch (SQLException e) {
-                getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
+        useToolMoney = getConfig().getBoolean("use-tool-money", true);
+
+        // ツール報酬をロード
+        loadToolRewards();
+
+        rewardMap.put(Material.NETHERITE_PICKAXE, 250);
+        rewardMap.put(Material.NETHERITE_SHOVEL, 250);
+        rewardMap.put(Material.DIAMOND_PICKAXE, 200);
+        rewardMap.put(Material.DIAMOND_SHOVEL, 200);
+        rewardMap.put(Material.GOLDEN_PICKAXE, 175);
+        rewardMap.put(Material.GOLDEN_SHOVEL, 175);
+        rewardMap.put(Material.IRON_PICKAXE, 150);
+        rewardMap.put(Material.IRON_SHOVEL, 150);
+        rewardMap.put(Material.STONE_PICKAXE, 100);
+        rewardMap.put(Material.STONE_SHOVEL, 100);
+        rewardMap.put(Material.WOODEN_PICKAXE, 50);
+        rewardMap.put(Material.WOODEN_SHOVEL, 50);
+
+        FileConfiguration dataConfig;
+        dataFile = new File(getDataFolder(), "player-data.yml");
+        if (!dataFile.exists()) {
+            dataFile.getParentFile().mkdirs();
+            saveResource("player-data.yml", false);
+        }
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
+
+        File configFile = new File(getDataFolder(), "config.yml");
+
+        reloadConfig();  // すでに存在する config.yml の内容を読み込む
+
+        toolMoney = new ToolMoney(getConfig(), this);
+
+        YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
+        this.dataConfig = yamlConfiguration;
+        scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
+        worldBlacklist = getConfig().getStringList("world-blacklist");
+
+        if (!setupEconomy()) { // 起動時のVault関係があるかどうか
+            getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
+
+            if (getServer().getPluginManager().getPlugin("Vault") == null) {
+                getLogger().severe("エラー：Vaultプラグインが見つかりません。");
+            } else {
+                getLogger().severe("エラー：Economyサービスプロバイダが見つかりません。");
             }
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
+        this.getServer().getPluginManager().registerEvents(this, this);
 
-            useToolMoney = getConfig().getBoolean("use-tool-money", true);
-
-            // ツール報酬をロード
-            loadToolRewards();
-
-            rewardMap.put(Material.NETHERITE_PICKAXE, 250);
-            rewardMap.put(Material.NETHERITE_SHOVEL, 250);
-            rewardMap.put(Material.DIAMOND_PICKAXE, 200);
-            rewardMap.put(Material.DIAMOND_SHOVEL, 200);
-            rewardMap.put(Material.GOLDEN_PICKAXE, 175);
-            rewardMap.put(Material.GOLDEN_SHOVEL, 175);
-            rewardMap.put(Material.IRON_PICKAXE, 150);
-            rewardMap.put(Material.IRON_SHOVEL, 150);
-            rewardMap.put(Material.STONE_PICKAXE, 100);
-            rewardMap.put(Material.STONE_SHOVEL, 100);
-            rewardMap.put(Material.WOODEN_PICKAXE, 50);
-            rewardMap.put(Material.WOODEN_SHOVEL, 50);
-
-            FileConfiguration dataConfig;
-            dataFile = new File(getDataFolder(), "player-data.yml");
-            if (!dataFile.exists()) {
-                dataFile.getParentFile().mkdirs();
-                saveResource("player-data.yml", false);
-            }
-            dataConfig = YamlConfiguration.loadConfiguration(dataFile);
-
-            File configFile = new File(getDataFolder(), "config.yml");
-
-            reloadConfig();  // すでに存在する config.yml の内容を読み込む
-
-            toolMoney = new ToolMoney(getConfig(), this);
-
-            YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(dataFile);
-            this.dataConfig = yamlConfiguration;
-            scoreboardUpdateInterval = getConfig().getLong("update-interval", scoreboardUpdateInterval);
-            worldBlacklist = getConfig().getStringList("world-blacklist");
-
-            if (!setupEconomy()) { // 起動時のVault関係があるかどうか
-                getLogger().severe("エラー：Vaultプラグインが見つかりませんでした。プラグインを無効化します。");
-
-                if (getServer().getPluginManager().getPlugin("Vault") == null) {
-                    getLogger().severe("エラー：Vaultプラグインが見つかりません。");
-                } else {
-                    getLogger().severe("エラー：Economyサービスプロバイダが見つかりません。");
-                }
-                getServer().getPluginManager().disablePlugin(this);
-                return;
-            }
-
-            this.getServer().getPluginManager().registerEvents(this, this);
-
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    // スコアボードの初期化
-                    scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                    objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
-                    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                    loadData(); // player-data.ymlの中身を読み込む。
-
-                }
-            }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
-            startScoreboardUpdater();
-
-            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
-
-            ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
-            Commands commandExecutor = new Commands(this, toolMoneyInstance);
-            getCommand("updatescoreboard").setExecutor(commandExecutor);
-            getCommand("setprobability").setExecutor(commandExecutor);
-            getCommand("reload").setExecutor(commandExecutor);
-            getCommand("set").setExecutor(commandExecutor);
-
-            if (this.getConfig().contains("scoreboardUpdateInterval")) {
-                scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // スコアボードの初期化
+                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
+                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                loadData(); // player-data.ymlの中身を読み込む。
 
             }
+        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+        startScoreboardUpdater();
 
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
+
+        ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
+        Commands commandExecutor = new Commands(this, toolMoneyInstance);
+        getCommand("updatescoreboard").setExecutor(commandExecutor);
+        getCommand("setprobability").setExecutor(commandExecutor);
+        getCommand("reload").setExecutor(commandExecutor);
+        getCommand("set").setExecutor(commandExecutor);
+
+        if (this.getConfig().contains("scoreboardUpdateInterval")) {
+            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+
+        }
 
 
     }
@@ -186,7 +190,7 @@ public class Digger extends JavaPlugin implements Listener {
         try {
             pointsDatabase.saveData(blockCount, placedBlocks);
         } catch (SQLException e) {
-            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルにフォールバックします: " + e.getMessage());
+            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています...: " + e.getMessage());
             saveToYaml(blockCount, placedBlocks);
         }
     }
@@ -518,7 +522,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         // SQLiteデータベースに保存
         try {
-            PointsDatabase.saveData(blockCount, placedBlocks); // このメソッドはPointsDatabaseクラスに実装する必要があります
+            pointsDatabase.saveData(blockCount, placedBlocks);
         } catch (SQLException e) {
             getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
         }

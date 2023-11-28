@@ -33,7 +33,14 @@ public class PointsDatabase {
     }
 
     public void saveData(Map<UUID, Integer> blockCount, Iterable<Location> placedBlocks) throws SQLException {
-        // blockCountの保存
+        // blockCount の保存
+        saveBlockCount(blockCount);
+
+        // placedBlocks の保存
+        savePlacedBlocks(placedBlocks);
+    }
+
+    private void saveBlockCount(Map<UUID, Integer> blockCount) throws SQLException {
         String blockCountQuery = "INSERT INTO player_data (MCID, BlocksMined) VALUES (?, ?) "
                 + "ON CONFLICT(MCID) DO UPDATE SET BlocksMined = excluded.BlocksMined;";
 
@@ -44,8 +51,9 @@ public class PointsDatabase {
                 pstmt.executeUpdate();
             }
         }
+    }
 
-        // placedBlocksの保存
+    private void savePlacedBlocks(Iterable<Location> placedBlocks) throws SQLException {
         String placedBlocksQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";
 
         try (PreparedStatement pstmt = connection.prepareStatement(placedBlocksQuery)) {
