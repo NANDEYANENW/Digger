@@ -413,6 +413,8 @@ public class Digger extends JavaPlugin implements Listener {
 
     public void updateScoreboard(Player viewingPlayer) {
 
+
+
         Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
         if (showScoreboard) {
 
@@ -422,10 +424,11 @@ public class Digger extends JavaPlugin implements Listener {
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             // ソートされたリストを取得
-            List<Map.Entry<UUID, Integer>> sortedList = blockCount.entrySet().stream()
-                    .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
+            List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
+                    .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
                     .limit(10)
                     .collect(Collectors.toList());
+
 
             // プレイヤーのランクを決定
             int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), 0);
@@ -523,8 +526,14 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
         // SQLiteデータベースに保存
+        Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().getBlocksMined()
+                ));
+
         try {
-            pointsDatabase.saveData(blockCount, placedBlocks);
+            pointsDatabase.saveData(simpleBlockCount, placedBlocks); // 変換したマップを渡す
         } catch (SQLException e) {
             getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
         }
