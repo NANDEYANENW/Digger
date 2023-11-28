@@ -7,11 +7,18 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Commands implements CommandExecutor {
+    public final Map<UUID, Digger.PlayerData> blockCount = new HashMap<>();
+
+
     private boolean isToolRewardEnabled = true;
     boolean currentSetting = Digger.getInstance().isToolRewardEnabled;
+
     private final Digger plugin;
     private final ToolMoney toolMoney;
 
@@ -94,9 +101,14 @@ public class Commands implements CommandExecutor {
                             return true;
                         }
 
+
                         UUID targetUUID = targetPlayer.getUniqueId();
-                        // 新しいスコアを設定
-                        plugin.blockCount.put(targetUUID, newScore);
+                        // PlayerData オブジェクトを取得または作成
+                        Digger.PlayerData playerData = plugin.blockCount.getOrDefault(targetUUID, new Digger.PlayerData(targetPlayer.getName(), 0));
+                        // 新しいスコアで更新
+                        playerData.setBlocksMined(newScore);
+                        // マップに PlayerData オブジェクトを格納
+                        plugin.blockCount.put(targetUUID, playerData);
                         // 全プレイヤーのスコアボードを更新
                         plugin.updateAllPlayersScoreboard();
                         player.sendMessage("§a" + playerName + "のスコアを" + newScore + "に設定しました。");
@@ -104,16 +116,9 @@ public class Commands implements CommandExecutor {
                         player.sendMessage("§c無効なスコアです。数字を入力してください。");
                     }
                     return true;
-                } else {
-                    player.sendMessage("§c使用方法: /set <プレイヤー名> <新しいスコア>");
-                    return true;
                 }
-            } else {
-                sender.sendMessage("§cこのコマンドはプレイヤーのみが実行できます。");
-                return true;
             }
         }
-
         return false;
     }
 }
