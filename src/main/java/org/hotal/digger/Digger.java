@@ -424,37 +424,39 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-    public void updateScoreboard (Player viewingPlayer) {
-
-            Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
-             if (showScoreboard) {
-// スコアボードのセットアップ
+    public void updateScoreboard(Player viewingPlayer) {
+        Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
+        if (showScoreboard) {
+            // スコアボードのセットアップ
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
             Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.LIGHT_PURPLE + "整地の順位");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             // ソートされたリストを取得
-                 List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
-                         .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
-                         .limit(10)
-                         .collect(Collectors.toList());
+            List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
+                    .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
+                    .limit(10)
+                    .collect(Collectors.toList());
 
-
-                 // プレイヤーのランクを決定
-                 int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
-                 int viewerRankIndex = sortedList.stream()
+            // プレイヤーのランクを決定
+            int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
+            int viewerRankIndex = sortedList.stream()
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList())
                     .indexOf(viewingPlayer.getUniqueId());
-            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex >= 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+
+            // デバッグ情報をログに出力
+            getLogger().info("Viewer Score: " + viewerScore);
+            getLogger().info("Rank Display Text: " + rankDisplayText);
 
             // トップ10プレイヤーをスコアボードに表示
-                 for (int i = 0; i < sortedList.size(); i++) {
-                     Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
-                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-                     String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
-                     objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
-                 }
+            for (int i = 0; i < sortedList.size(); i++) {
+                Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
+                objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
+            }
 
                  // 空行
             objective.getScore(" ").setScore(1);
