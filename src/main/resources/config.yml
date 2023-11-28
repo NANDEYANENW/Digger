@@ -24,7 +24,27 @@ block-blacklist:
   - "SAND"
   - "FIRE"
   - "SUGAR_CANE"
-  -
+  - "COAL_ORE"
+  - "IRON_ORE"
+  - "COPPER_ORE"
+  - "GOLD_ORE"
+  - "REDSTONE_ORE"
+  - "EMERALD_ORE"
+  - "LAPIS_ORE"
+  - "DIAMOND_ORE"
+  - "DEEPSLATE_COPPER_ORE"
+  - "DEEPSLATE_GOLD_ORE"
+  - "DEEPSLATE_REDSTONE_ORE"
+  - "DEEPSLATE_EMERALD_ORE"
+  - "DEEPSLATE_LAPIS_ORE"
+  - "DEEPSLATEDIAMOND_ORE"
+  - "OAK_LOG"
+  - "SPRUCE_LOG"
+  - "BIRCH_LOG"
+  - "JUNGLE_LOG"
+  - "ACACIA_LOG"
+  - "DARK_OAK_LOG"
+
 
 update-interval: 20
 world-blacklist:
