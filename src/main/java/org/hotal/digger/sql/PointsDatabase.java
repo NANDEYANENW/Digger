@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;
+import org.hotal.digger.Digger;
 
 public class PointsDatabase {
     private Connection connection;
@@ -32,7 +33,7 @@ public class PointsDatabase {
         }
     }
 
-    public void saveData(Map<UUID, Integer> blockCount, Iterable<Location> placedBlocks) throws SQLException {
+    public void saveData(Map<UUID, Digger.PlayerData> blockCount, Iterable<Location> placedBlocks) throws SQLException {
         // blockCount の保存
         saveBlockCount(blockCount);
 

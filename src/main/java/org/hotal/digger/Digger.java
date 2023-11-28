@@ -187,13 +187,25 @@ public class Digger extends JavaPlugin implements Listener {
 
     // データの保存
     public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
+        Map<UUID, PlayerData> playerDataMap = new HashMap<>();
+        for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
+            // プレイヤーのUUIDを取得
+            UUID playerId = entry.getKey();
+            // プレイヤーの名前を取得
+            Player player = Bukkit.getPlayer(playerId);
+            String playerName = (player != null) ? player.getName() : "Unknown";
+            // PlayerDataオブジェクトを作成
+            playerDataMap.put(playerId, new PlayerData(playerName, entry.getValue()));
+        }
+
         try {
-            pointsDatabase.saveData(blockCount, placedBlocks);
+            pointsDatabase.saveData(playerDataMap, placedBlocks);
         } catch (SQLException e) {
             getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています...: " + e.getMessage());
             saveToYaml(blockCount, placedBlocks);
         }
     }
+
 
     private void saveToYaml(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
         // blockCount の保存
@@ -384,7 +396,8 @@ public class Digger extends JavaPlugin implements Listener {
 
     public void updateBlockCount(Player player) {
         UUID playerID = player.getUniqueId();
-        blockCount.put(playerID, blockCount.getOrDefault(playerID, 0) + 1);
+        blockCount.getOrDefault(playerID, new PlayerData("", 0)).getBlocksMined();
+
 
     }
 
@@ -406,16 +419,19 @@ public class Digger extends JavaPlugin implements Listener {
 
     public void updateAllPlayersScoreboard() {
         // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            updateScoreboard(player);
-        }
+        List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
+                .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
+                .limit(10)
+                .collect(Collectors.toList());
+
+
     }
 
     public void updateScoreboard(Player viewingPlayer) {
 
-
-
         Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
+        String rankDisplayText = null;
+        int viewerScore = 0;
         if (showScoreboard) {
 
             // スコアボードのセットアップ
@@ -431,39 +447,41 @@ public class Digger extends JavaPlugin implements Listener {
 
 
             // プレイヤーのランクを決定
-            int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), 0);
+            viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
             int viewerRankIndex = sortedList.stream()
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList())
                     .indexOf(viewingPlayer.getUniqueId());
-            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+            rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
 
             // トップ10プレイヤーをスコアボードに表示
             for (int i = 0; i < sortedList.size(); i++) {
-                Map.Entry<UUID, Integer> entry = sortedList.get(i);
+                Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
                 String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
-                objective.getScore(listedPlayerName).setScore(entry.getValue());
+                objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
             }
 
-            // 空行
-            objective.getScore(" ").setScore(1);
-
-            objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
-            objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
-
-            // プレイヤーの座標を表示
-            Location location = viewingPlayer.getLocation();
-            String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
-                    "X:" + location.getBlockX() +
-                    " Y:" + location.getBlockY() +
-                    " Z:" + location.getBlockZ();
-            objective.getScore(locationDisplay).setScore(-2);
-
-            // スコアボードをプレイヤーに適用
-            viewingPlayer.setScoreboard(scoreboard);
         }
+
+        // 空行
+        objective.getScore(" ").setScore(1);
+
+        objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
+        objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
+
+        // プレイヤーの座標を表示
+        Location location = viewingPlayer.getLocation();
+        String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
+                "X:" + location.getBlockX() +
+                " Y:" + location.getBlockY() +
+                " Z:" + location.getBlockZ();
+        objective.getScore(locationDisplay).setScore(-2);
+
+        // スコアボードをプレイヤーに適用
+        viewingPlayer.setScoreboard(scoreboard);
     }
+
 
 
     @Override
@@ -533,14 +551,15 @@ public class Digger extends JavaPlugin implements Listener {
                 ));
 
         try {
-            pointsDatabase.saveData(simpleBlockCount, placedBlocks); // 変換したマップを渡す
+            pointsDatabase.saveData(blockCount, placedBlocks);
         } catch (SQLException e) {
             getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
         }
     }
 
 
-    private String locationToString(Location loc) {
+
+        private String locationToString(Location loc) {
         return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
