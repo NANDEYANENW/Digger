@@ -41,14 +41,14 @@ public class PointsDatabase {
         savePlacedBlocks(placedBlocks);
     }
 
-    private void saveBlockCount(Map<UUID, Integer> blockCount) throws SQLException {
+    private void saveBlockCount(Map<UUID, Digger.PlayerData> blockCount) throws SQLException {
         String blockCountQuery = "INSERT INTO player_data (UUID, BlocksMined) VALUES (?, ?) "
                 + "ON CONFLICT(UUID) DO UPDATE SET BlocksMined = excluded.BlocksMined;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(blockCountQuery)) {
-            for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
+            for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
                 pstmt.setString(1, entry.getKey().toString());
-                pstmt.setInt(2, entry.getValue());
+                pstmt.setInt(2, entry.getValue().getBlocksMined());
                 pstmt.executeUpdate();
             }
         }
