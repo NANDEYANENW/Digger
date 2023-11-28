@@ -16,10 +16,10 @@ public class PointsDatabase {
         // テーブルの作成
         try (Statement statement = connection.createStatement()) {
             String playerDataTableCreationQuery = "CREATE TABLE IF NOT EXISTS player_data ("
-                    + "MCID VARCHAR(255) NOT NULL,"
+                    + "UUID VARCHAR(255) NOT NULL,"
                     + "PlayerName VARCHAR(255),"
                     + "BlocksMined INT DEFAULT 0,"
-                    + "PRIMARY KEY (MCID));";
+                    + "PRIMARY KEY (UUID));";
             statement.execute(playerDataTableCreationQuery);
 
             String placedBlocksTableCreationQuery = "CREATE TABLE IF NOT EXISTS placed_blocks ("
@@ -41,8 +41,8 @@ public class PointsDatabase {
     }
 
     private void saveBlockCount(Map<UUID, Integer> blockCount) throws SQLException {
-        String blockCountQuery = "INSERT INTO player_data (MCID, BlocksMined) VALUES (?, ?) "
-                + "ON CONFLICT(MCID) DO UPDATE SET BlocksMined = excluded.BlocksMined;";
+        String blockCountQuery = "INSERT INTO player_data (UUID, BlocksMined) VALUES (?, ?) "
+                + "ON CONFLICT(UUID) DO UPDATE SET BlocksMined = excluded.BlocksMined;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(blockCountQuery)) {
             for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
