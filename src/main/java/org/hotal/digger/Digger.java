@@ -417,74 +417,65 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-    public void updateAllPlayersScoreboard() {
+    public void updateAllPlayersScoreboard () {
         // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
-        List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
-                .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
-                .limit(10)
-                .collect(Collectors.toList());
-
-
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updateScoreboard(player);
+        }
     }
 
-    public void updateScoreboard(Player viewingPlayer) {
+    public void updateScoreboard (Player viewingPlayer) {
 
-        Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
-        String rankDisplayText = null;
-        int viewerScore = 0;
-        if (showScoreboard) {
-
-            // スコアボードのセットアップ
+            Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
+             if (showScoreboard) {
+// スコアボードのセットアップ
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
             Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.LIGHT_PURPLE + "整地の順位");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             // ソートされたリストを取得
-            List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
-                    .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
-                    .limit(10)
-                    .collect(Collectors.toList());
+                 List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
+                         .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
+                         .limit(10)
+                         .collect(Collectors.toList());
 
 
-            // プレイヤーのランクを決定
-            viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
-            int viewerRankIndex = sortedList.stream()
+                 // プレイヤーのランクを決定
+                 int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
+                 int viewerRankIndex = sortedList.stream()
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList())
                     .indexOf(viewingPlayer.getUniqueId());
-            rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex > 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
 
             // トップ10プレイヤーをスコアボードに表示
-            for (int i = 0; i < sortedList.size(); i++) {
-                Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-                String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
-                objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
-            }
+                 for (int i = 0; i < sortedList.size(); i++) {
+                     Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
+                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                     String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
+                     objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
+                 }
 
+                 // 空行
+            objective.getScore(" ").setScore(1);
+            objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
+            objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
+            // プレイヤーの座標を表示
+            Location location = viewingPlayer.getLocation();
+            String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
+                    "X:" + location.getBlockX() +
+                    " Y:" + location.getBlockY() +
+                    " Z:" + location.getBlockZ();
+            objective.getScore(locationDisplay).setScore(-2);
+
+            // スコアボードをプレイヤーに適用
+            viewingPlayer.setScoreboard(scoreboard);
         }
-
-        // 空行
-        objective.getScore(" ").setScore(1);
-
-        objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
-        objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
-
-        // プレイヤーの座標を表示
-        Location location = viewingPlayer.getLocation();
-        String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
-                "X:" + location.getBlockX() +
-                " Y:" + location.getBlockY() +
-                " Z:" + location.getBlockZ();
-        objective.getScore(locationDisplay).setScore(-2);
-
-        // スコアボードをプレイヤーに適用
-        viewingPlayer.setScoreboard(scoreboard);
     }
 
 
 
-    @Override
+        @Override
     public void onDisable() {
         saveData();
         getConfig().set("update-interval", scoreboardUpdateInterval);
