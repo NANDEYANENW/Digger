@@ -4,6 +4,8 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.hotal.digger.Digger;
 
@@ -80,22 +82,28 @@ public class PointsDatabase {
         // blockCount の保存
         saveBlockCount(blockCount);
 
+
         // placedBlocks の保存
         savePlacedBlocks(placedBlocks);
     }
 
     private void saveBlockCount(Map<UUID, Digger.PlayerData> blockCount) throws SQLException {
-        String blockCountQuery = "INSERT INTO player_data (UUID, BlocksMined) VALUES (?, ?) "
-                + "ON CONFLICT(UUID) DO UPDATE SET BlocksMined = excluded.BlocksMined;";
+        for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
+            Bukkit.getLogger().info("Saving PlayerData for UUID: " + entry.getKey() + ", PlayerName: " + entry.getValue().getPlayerName());
+        }
+        String blockCountQuery = "INSERT INTO player_data (UUID, BlocksMined, PlayerName) VALUES (?, ?, ?) "
+                + "ON CONFLICT(UUID) DO UPDATE SET BlocksMined = excluded.BlocksMined, PlayerName = excluded.PlayerName;";
 
         try (PreparedStatement pstmt = connection.prepareStatement(blockCountQuery)) {
             for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
                 pstmt.setString(1, entry.getKey().toString());
                 pstmt.setInt(2, entry.getValue().getBlocksMined());
+                pstmt.setString(3, entry.getValue().getPlayerName()); // PlayerNameの設定
                 pstmt.executeUpdate();
             }
         }
     }
+
 
     private void savePlacedBlocks(Iterable<Location> placedBlocks) throws SQLException {
         String placedBlocksQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";

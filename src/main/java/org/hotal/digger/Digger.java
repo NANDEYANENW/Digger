@@ -1,8 +1,8 @@
 package org.hotal.digger;
+
 import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.Command;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
