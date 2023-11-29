@@ -396,10 +396,15 @@ public class Digger extends JavaPlugin implements Listener {
 
     public void updateBlockCount(Player player) {
         UUID playerID = player.getUniqueId();
-        blockCount.getOrDefault(playerID, new PlayerData("", 0)).getBlocksMined();
-
-
+        // プレイヤーデータの取得、なければ新しいプレイヤーデータを作成
+        PlayerData data = blockCount.getOrDefault(playerID, new PlayerData(player.getName(), 0));
+        // 採掘数を1増やす
+        data.setBlocksMined(data.getBlocksMined() + 1);
+        // 更新されたプレイヤーデータをマップに戻す
+        blockCount.put(playerID, data);
     }
+
+
 
     private void giveReward(Player player) {
         Material toolType = player.getInventory().getItemInMainHand().getType();
@@ -446,9 +451,6 @@ public class Digger extends JavaPlugin implements Listener {
                     .indexOf(viewingPlayer.getUniqueId());
             String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex >= 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
 
-            // デバッグ情報をログに出力
-            getLogger().info("Viewer Score: " + viewerScore);
-            getLogger().info("Rank Display Text: " + rankDisplayText);
 
             // トップ10プレイヤーをスコアボードに表示
             for (int i = 0; i < sortedList.size(); i++) {
