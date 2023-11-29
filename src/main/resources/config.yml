@@ -44,7 +44,7 @@ block-blacklist:
   - "JUNGLE_LOG"
   - "ACACIA_LOG"
   - "DARK_OAK_LOG"
-
+  - "OBSIDIAN"
 
 update-interval: 20
 world-blacklist:
