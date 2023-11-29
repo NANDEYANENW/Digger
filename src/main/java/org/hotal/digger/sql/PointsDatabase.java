@@ -1,6 +1,7 @@
 package org.hotal.digger.sql;
 
 import java.sql.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;
@@ -33,7 +34,49 @@ public class PointsDatabase {
         }
     }
 
-    public void saveData(Map<UUID, Digger.PlayerData> blockCount, Iterable<Location> placedBlocks) throws SQLException {
+    // データベースからデータを取得するメソッド
+    public Map<UUID, Digger.PlayerData> getData() throws SQLException {
+        Map<UUID, Digger.PlayerData> data = new HashMap<>();
+        String query = "SELECT * FROM player_data"; // データベースのテーブル名を適宜変更してください
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                // データベースからUUIDとブロックの採掘数を取得
+                String uuidString = rs.getString("UUID");
+                UUID uuid = UUID.fromString(uuidString);
+                String playerName = rs.getString("PlayerName");
+                int blocksMined = rs.getInt("BlocksMined");
+
+                // 取得したデータでPlayerDataオブジェクトを作成
+                Digger.PlayerData playerData = new Digger.PlayerData(playerName, blocksMined);
+                data.put(uuid, playerData);
+            }
+        }
+
+        return data;
+    }
+
+    public Map<UUID, Digger.PlayerData> loadData() throws SQLException {
+        Map<UUID, Digger.PlayerData> loadedData = new HashMap<>();
+        // SQLクエリを実行し、結果を取得
+        String query = "SELECT * FROM player_data;";
+        try (Statement stmt = this.connection.createStatement();
+             ResultSet results = stmt.executeQuery(query)) {
+
+            while (results.next()) {
+                UUID uuid = UUID.fromString(results.getString("UUID"));
+                String playerName = results.getString("PlayerName");
+                int blocksMined = results.getInt("BlocksMined");
+
+                loadedData.put(uuid, new Digger.PlayerData(playerName, blocksMined));
+            }
+        }
+        return loadedData;
+    }
+
+    public void saveData(Map<UUID,Digger.PlayerData> blockCount, Iterable<Location> placedBlocks) throws SQLException {
         // blockCount の保存
         saveBlockCount(blockCount);
 
@@ -66,6 +109,10 @@ public class PointsDatabase {
                 pstmt.executeUpdate();
             }
         }
+    }
+    public boolean checkConnection() throws SQLException {
+        // connection はデータベースへの接続オブジェクトです
+        return connection != null && !connection.isClosed();
     }
 
     public void closeConnection() throws SQLException {

@@ -187,24 +187,27 @@ public class Digger extends JavaPlugin implements Listener {
 
     // データの保存
     public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
-        Map<UUID, PlayerData> playerDataMap = new HashMap<>();
-        for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
+        Map<UUID, Digger.PlayerData> blockCount = new HashMap<>();
+        for (Map.Entry<UUID, Integer> entry : simpleBlockCount.entrySet()) {
             // プレイヤーのUUIDを取得
             UUID playerId = entry.getKey();
             // プレイヤーの名前を取得
             Player player = Bukkit.getPlayer(playerId);
-            String playerName = (player != null) ? player.getName() : "Unknown";
             // PlayerDataオブジェクトを作成
             playerDataMap.put(playerId, new PlayerData(playerName, entry.getValue()));
         }
 
+         // データを保存する
         try {
-            pointsDatabase.saveData(playerDataMap, placedBlocks);
+            pointsDatabase.saveData(blockCount, placedBlocks);
         } catch (SQLException e) {
+            // エラーハンドリング
             getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています...: " + e.getMessage());
             saveToYaml(blockCount, placedBlocks);
         }
+
     }
+
 
 
     private void saveToYaml(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
@@ -490,13 +493,30 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public void loadData() {
+        // データベースから読み込む試み
+        try {
+            // データベース接続の確認とデータの取得
+            if (pointsDatabase.checkConnection()) {
+                Map<UUID, PlayerData> dataFromDatabase = pointsDatabase.getData();
+                if (dataFromDatabase != null) {
+                    blockCount.clear();
+                    blockCount.putAll(dataFromDatabase);
+                    getLogger().info("データがデータベースから読み込まれました。");
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            getLogger().severe("データベースからの読み込み中にエラーが発生しました: " + e.getMessage());
+            // エラーが発生した場合はYAMLからの読み込みにフォールバック
+        }
+
+        // YAMLファイルからの読み込みにフォールバック
         dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
+            getLogger().info("player-data.ymlファイルが見つかりませんでした。新しく作成します。");
             saveResource("player-data.yml", false);
         }
         dataConfig = YamlConfiguration.loadConfiguration(dataFile);
-
-        Map<UUID, PlayerData> blockCount = new HashMap<>(); // この行を変更
 
         if (dataConfig.contains("blockCount")) {
             blockCount.clear();
@@ -507,8 +527,11 @@ public class Digger extends JavaPlugin implements Listener {
                 PlayerData playerData = new PlayerData(playerName, blocksMined);
                 blockCount.put(uuid, playerData);
             }
+            getLogger().info("データがYAMLファイルから読み込まれました。");
         }
     }
+
+
 
 
     private Location stringToLocation(String s) {
@@ -521,40 +544,50 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public void saveData() {
-        // YAMLファイルに保存
-        if (dataConfig != null) {
-            for (Map.Entry<UUID, PlayerData> entry : blockCount.entrySet()) {
-                UUID uuid = entry.getKey();
-                PlayerData playerData = entry.getValue();
-                dataConfig.set("blockCount." + uuid.toString() + ".blocksMined", playerData.getBlocksMined());
-                dataConfig.set("blockCount." + uuid.toString() + ".playerName", playerData.getPlayerName());
-            }
-
-
-            try {
-                dataConfig.save(dataFile);
-            } catch (IOException e) {
-                getLogger().severe("§aデータファイルの保存中にエラーが発生しました。" + e.getMessage());
-            }
-        }
-
-        // SQLiteデータベースに保存
-        Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue().getBlocksMined()
-                ));
-
+        // データベースに保存を試みる
         try {
-            pointsDatabase.saveData(blockCount, placedBlocks);
+            // データベース用の変換処理（必要に応じて）
+            Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> entry.getValue().getBlocksMined()
+                    ));
+
+            // データベースに保存
+            pointsDatabase.saveData(simpleBlockCount, placedBlocks);
+            getLogger().info("データがデータベースに保存されました。");
         } catch (SQLException e) {
-            getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
+            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルにフォールバックしています: " + e.getMessage());
+
+            // YAMLファイルにフォールバックして保存
+            if (dataConfig != null) {
+                for (Map.Entry<UUID, PlayerData> entry : blockCount.entrySet()) {
+                    UUID uuid = entry.getKey();
+                    PlayerData playerData = entry.getValue();
+                    dataConfig.set("blockCount." + uuid.toString() + ".blocksMined", playerData.getBlocksMined());
+                    dataConfig.set("blockCount." + uuid.toString() + ".playerName", playerData.getPlayerName());
+                }
+
+                // placedBlocks の保存
+                List<String> blockLocStrings = placedBlocks.stream()
+                        .map(loc -> loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ())
+                        .collect(Collectors.toList());
+                dataConfig.set("placedBlocks", blockLocStrings);
+
+                try {
+                    dataConfig.save(dataFile);
+                    getLogger().info("データがYAMLファイルに保存されました。");
+                } catch (IOException yamlException) {
+                    getLogger().severe("YAMLファイルへの保存中にエラーが発生しました: " + yamlException.getMessage());
+                }
+            }
         }
     }
 
 
 
-        private String locationToString(Location loc) {
+
+    private String locationToString(Location loc) {
         return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
