@@ -548,20 +548,23 @@ public class Digger extends JavaPlugin implements Listener {
     public void saveData() {
         // データベースに保存を試みる
         try {
-            // データベース用の変換処理（必要に応じて）
+            // データ変換
             Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            entry -> entry.getValue().getBlocksMined()
-                    ));
+                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBlocksMined()));
 
             // データベースに保存
-            pointsDatabase.saveData(simpleBlockCount, placedBlocks);
+            pointsDatabase.saveData(blockCount, placedBlocks);
             getLogger().info("データがデータベースに保存されました。");
-        } catch (SQLException e) {
-            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルにフォールバックしています: " + e.getMessage());
 
-            // YAMLファイルにフォールバックして保存
+            // YAMLファイルに保存
+            saveToYAML();
+        } catch (SQLException | IOException e) {
+            getLogger().severe("データの保存中にエラーが発生しました。YAMLファイルにフォールバックしています: " + e.getMessage());
+
+        }
+    }
+
+        private void saveToYAML() throws IOException {
             if (dataConfig != null) {
                 for (Map.Entry<UUID, PlayerData> entry : blockCount.entrySet()) {
                     UUID uuid = entry.getKey();
@@ -576,15 +579,12 @@ public class Digger extends JavaPlugin implements Listener {
                         .collect(Collectors.toList());
                 dataConfig.set("placedBlocks", blockLocStrings);
 
-                try {
-                    dataConfig.save(dataFile);
-                    getLogger().info("データがYAMLファイルに保存されました。");
-                } catch (IOException yamlException) {
-                    getLogger().severe("YAMLファイルへの保存中にエラーが発生しました: " + yamlException.getMessage());
-                }
+
+                dataConfig.save(dataFile);
+                getLogger().info("データがYAMLファイルに保存されました。");
             }
         }
-    }
+
 
 
 
