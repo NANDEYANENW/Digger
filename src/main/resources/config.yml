@@ -45,6 +45,7 @@ block-blacklist:
   - "ACACIA_LOG"
   - "DARK_OAK_LOG"
   - "OBSIDIAN"
+  - "TALL_GRASS"
 
 update-interval: 20
 world-blacklist:
