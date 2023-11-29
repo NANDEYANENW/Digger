@@ -193,13 +193,15 @@ public class Digger extends JavaPlugin implements Listener {
             UUID playerId = entry.getKey();
             // プレイヤーの名前を取得
             Player player = Bukkit.getPlayer(playerId);
+            String playerName = (player != null) ? player.getName() : "Unknown";
             // PlayerDataオブジェクトを作成
             playerDataMap.put(playerId, new PlayerData(playerName, entry.getValue()));
         }
 
+
          // データを保存する
         try {
-            pointsDatabase.saveData(blockCount, placedBlocks);
+            pointsDatabase.saveData(playerDataMap, placedBlocks); // playerDataMapを使用
         } catch (SQLException e) {
             // エラーハンドリング
             getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています...: " + e.getMessage());
