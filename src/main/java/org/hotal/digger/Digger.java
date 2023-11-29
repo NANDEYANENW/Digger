@@ -187,8 +187,8 @@ public class Digger extends JavaPlugin implements Listener {
 
     // データの保存
     public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
-        Map<UUID, Digger.PlayerData> blockCount = new HashMap<>();
-        for (Map.Entry<UUID, Integer> entry : simpleBlockCount.entrySet()) {
+        Map<UUID, Digger.PlayerData> playerDataMap = new HashMap<>();
+        for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
             // プレイヤーのUUIDを取得
             UUID playerId = entry.getKey();
             // プレイヤーの名前を取得

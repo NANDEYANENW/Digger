@@ -76,7 +76,7 @@ public class PointsDatabase {
         return loadedData;
     }
 
-    public void saveData(Map<UUID,Digger.PlayerData> blockCount, Iterable<Location> placedBlocks) throws SQLException {
+    public void saveData(Map<UUID, Digger.PlayerData> blockCount, Iterable<Location> placedBlocks) throws SQLException {
         // blockCount の保存
         saveBlockCount(blockCount);
 
