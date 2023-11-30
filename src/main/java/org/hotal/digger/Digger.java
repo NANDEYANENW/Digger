@@ -22,6 +22,7 @@ import org.bukkit.Material;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.hotal.digger.ench.EnchantManager;
 import org.hotal.digger.sql.PointsDatabase;
 
 import java.sql.SQLException;
@@ -36,6 +37,8 @@ public class Digger extends JavaPlugin implements Listener {
     private PointsDatabase pointsDatabase;
     private FileConfiguration dataConfig;
     private File dataFile;
+
+    private EnchantManager enchantManager = new EnchantManager();
 
     public boolean isToolRewardEnabled = true;
 
@@ -376,6 +379,13 @@ public class Digger extends JavaPlugin implements Listener {
 
         updateBlockCount(player);
         giveReward(player);
+        enchantManager.applyEfficiencyEnchant(player,getBlocksMined(player));
+    }
+
+    private int getBlocksMined(Player player) {
+      UUID playerID = player.getUniqueId();
+      PlayerData data = blockCount.get(playerID);
+      return data != null ? data.getBlocksMined() : 0;
     }
 
     @EventHandler
@@ -489,7 +499,6 @@ public class Digger extends JavaPlugin implements Listener {
         saveData();
         getConfig().set("update-interval", scoreboardUpdateInterval);
         getConfig().set("world-blacklist", worldBlacklist);
-        getConfig().set("use-tool-money", useToolMoney);
         saveConfig();
 
     }
