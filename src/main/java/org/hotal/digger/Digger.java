@@ -105,7 +105,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
 
-        useToolMoney = getConfig().getBoolean("use-tool-money", true);
+        useToolMoney = getConfig().getBoolean("use-tool-money", false);
 
         // ツール報酬をロード
         loadToolRewards();
