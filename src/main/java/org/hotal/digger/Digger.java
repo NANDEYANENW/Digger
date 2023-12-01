@@ -172,12 +172,11 @@ public class Digger extends JavaPlugin implements Listener {
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
         startScoreboardUpdater();
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03); //3%
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
-        getCommand("updatescoreboard").setExecutor(commandExecutor);
-        getCommand("setprobability").setExecutor(commandExecutor);
+       ;
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
 
@@ -207,13 +206,11 @@ public class Digger extends JavaPlugin implements Listener {
             pointsDatabase.saveData(playerDataMap, placedBlocks); // playerDataMapを使用
         } catch (SQLException e) {
             // エラーハンドリング
-            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています...: " + e.getMessage());
+            getLogger().severe("データベースへの保存中にエラーが発生しました。YAMLファイルに変更しています: " + e.getMessage());
             saveToYaml(blockCount, placedBlocks);
         }
 
     }
-
-
 
     private void saveToYaml(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
         // blockCount の保存
@@ -270,42 +267,16 @@ public class Digger extends JavaPlugin implements Listener {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
-
         Player player = (Player) sender;
 
-        if (cmd.getName().equalsIgnoreCase("setprobability")) {
-            if (!player.hasPermission("digger.setprobability")) {
-                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                return true;
-            }
-            double newProbability;
-            if (args.length == 0) {
-                player.sendMessage("§c 確率を指定してください。例: /digger:setprobability 0.5");
-                return true;
-            }
-            try {
-                newProbability = Double.parseDouble(args[0]);
-            } catch (NumberFormatException e) {
-                player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
-                return true;
-            }
-
-            if (newProbability >= 0.0 && newProbability <= 1.0) {
-                Digger.rewardProbability = newProbability;
-                this.getConfig().set("rewardProbability", newProbability);
-                this.saveConfig();
-                player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
-                return true;
-            }
-
-        } else if (cmd.getName().equalsIgnoreCase("reload")) {
+        if (cmd.getName().equalsIgnoreCase("reload")) {
             if (!player.hasPermission("digger.reload")) {
                 player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                 return true;
             }
 
             this.reloadConfig();
-            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.03);
+            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
             player.sendMessage("§a config.ymlを再読み込みしました。");
             return true;
         }
@@ -334,27 +305,11 @@ public class Digger extends JavaPlugin implements Listener {
                 return true;
             }
         }
-        if (cmd.getName().equalsIgnoreCase("sutm")) {
-            if (!(sender.hasPermission("digger.sutm"))) {
-                sender.sendMessage(ChatColor.RED + "このコマンドを実行する権限がありません。");
-                return true;
-            }
-            if (args.length != 1) {
-                sender.sendMessage(ChatColor.RED + "使用法: /sutm <true/false>");
-                return true;
-            }
 
-            boolean newSetting = Boolean.parseBoolean(args[0]);
-            isToolRewardEnabled = newSetting;
-            useToolMoney = newSetting;
-            getConfig().set("use-tool-money", newSetting);
-            saveConfig();
-
-            sender.sendMessage(ChatColor.GREEN + "ツール報酬の使用が " + newSetting + " に設定されました。");
-            return true;
-        }
         return false;
     }
+
+
 
 
     private void saveUpdateIntervalToConfig(long interval) {
@@ -492,8 +447,6 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-
-
         @Override
     public void onDisable() {
         saveData();
@@ -504,7 +457,7 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public void loadData() {
-        // データベースから読み込む試み
+        // データベースから読み込む
         try {
             // データベース接続の確認とデータの取得
             if (pointsDatabase.checkConnection()) {
@@ -518,10 +471,10 @@ public class Digger extends JavaPlugin implements Listener {
             }
         } catch (SQLException e) {
             getLogger().severe("データベースからの読み込み中にエラーが発生しました: " + e.getMessage());
-            // エラーが発生した場合はYAMLからの読み込みにフォールバック
+            // エラーが発生した場合はYAMLからの読み込みに変更
         }
 
-        // YAMLファイルからの読み込みにフォールバック
+        // YAMLファイルからの読み込みに変更
         dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
             getLogger().info("player-data.ymlファイルが見つかりませんでした。新しく作成します。");
@@ -538,7 +491,7 @@ public class Digger extends JavaPlugin implements Listener {
                 PlayerData playerData = new PlayerData(playerName, blocksMined);
                 blockCount.put(uuid, playerData);
             }
-            getLogger().info("データがYAMLファイルから読み込まれました。");
+            getLogger().info("データをyamlファイルから読み込みました。");
         }
     }
 
@@ -563,12 +516,12 @@ public class Digger extends JavaPlugin implements Listener {
 
             // データベースに保存
             pointsDatabase.saveData(blockCount, placedBlocks);
-            getLogger().info("データがデータベースに保存されました。");
+            getLogger().info("データをデータベースに保存しました。");
 
             // YAMLファイルに保存
             saveToYAML();
         } catch (SQLException | IOException e) {
-            getLogger().severe("データの保存中にエラーが発生しました。YAMLファイルにフォールバックしています: " + e.getMessage());
+            getLogger().severe("データの保存中にエラーが発生しました。YAMLファイルに変更しています: " + e.getMessage());
 
         }
     }
@@ -590,7 +543,7 @@ public class Digger extends JavaPlugin implements Listener {
 
 
                 dataConfig.save(dataFile);
-                getLogger().info("データがYAMLファイルに保存されました。");
+                getLogger().info("データをYAMLファイルに保存しました。");
             }
         }
 

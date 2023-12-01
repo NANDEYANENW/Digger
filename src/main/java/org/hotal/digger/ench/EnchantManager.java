@@ -25,10 +25,10 @@ public class EnchantManager {
     }
 
     private int getEnchantLevelForBlocksMined(int blocksMined) {
-        if (blocksMined >= 11000) return 5;
-        if (blocksMined >= 8000) return 4;
-        if (blocksMined >= 5000) return 3;
-        if (blocksMined >= 2000) return 2;
+        if (blocksMined >= 50000) return 5;
+        if (blocksMined >= 20000) return 4;
+        if (blocksMined >= 12000) return 3;
+        if (blocksMined >= 8000) return 2;
         return 0;
     }
 }

@@ -24,6 +24,6 @@ public class ToolMoney {
     }
 
     public void setToolMoneyEnabled(boolean enabled) {
-        config.set("use-tool-money", enabled);
+        config.set("use-tool-money", false);
     }
 }

@@ -89,7 +89,7 @@ public class PointsDatabase {
 
     private void saveBlockCount(Map<UUID, Digger.PlayerData> blockCount) throws SQLException {
         for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
-            Bukkit.getLogger().info("Saving PlayerData for UUID: " + entry.getKey() + ", PlayerName: " + entry.getValue().getPlayerName());
+            Bukkit.getLogger().info("UUIDのPlayerDataをセーブしています: " + entry.getKey() + ", PlayerName: " + entry.getValue().getPlayerName());
         }
         String blockCountQuery = "INSERT INTO player_data (UUID, BlocksMined, PlayerName) VALUES (?, ?, ?) "
                 + "ON CONFLICT(UUID) DO UPDATE SET BlocksMined = excluded.BlocksMined, PlayerName = excluded.PlayerName;";

@@ -48,8 +48,6 @@ public class CoordinatesDisplay {
         Objective objective = scoreboard.registerNewObjective("diggingRank", "dummy", ChatColor.AQUA + "整地の順位");
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // ... 整地順位の処理は変更なし ...
-
         viewingPlayer.setScoreboard(scoreboard);
     }
 

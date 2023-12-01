@@ -51,7 +51,7 @@ update-interval: 20
 world-blacklist:
   - world_nether
   - world_the_end
-rewardProbability: 0.03
+rewardProbability: 0.02
 use-tool-money: false
 tools:
   NETHERITE_PICKAXE: 250
