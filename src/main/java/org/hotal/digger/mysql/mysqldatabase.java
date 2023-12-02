@@ -1,32 +1,61 @@
 package org.hotal.digger.mysql;
 
 import java.sql.*;
+import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class mysqldatabase {
     public static void main(String[] args) {
+        Properties prop = new Properties();
+        try {
+            // 設定ファイルを読み込む
+            prop.load(new FileInputStream("config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
-        // データベース接続情報は外部から取得する
-        String url = "jdbc:mysql://localhost:3306/database.db";
-        String user = "root";
-        String password = "";
+        String url = prop.getProperty("db.url");
+        String user = prop.getProperty("db.user");
+        String password = prop.getProperty("db.password");
 
-        String query = "SELECT * FROM player_data;";
-
-        // try-with-resourcesを使用して自動的にリソースをクローズ
+        // 最初のクエリ
+        String query1 = "SELECT * FROM player_data;";
         try (Connection conn = DriverManager.getConnection(url, user, password);
-             PreparedStatement stmt = conn.prepareStatement(query);
+             PreparedStatement stmt = conn.prepareStatement(query1);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                String UUID = rs.getString("UUID");
-                String PlayerName = rs.getString("PlayerName");
-                String BlocksMined = rs.getString("BlocksMined");
+                // 結果の処理...
+                String uuid = rs.getString("UUID");
+                String playerName = rs.getString("PlayerName");
+                int blocksMined = rs.getInt("BlocksMined");
 
-                System.out.println(UUID + "、" + PlayerName + "、" + BlocksMined);
-            }
+                // 取得したデータを使用して処理（例: コンソールに出力）
+                System.out.println("UUID: " + uuid + ", Player Name: " + playerName + ", Blocks Mined: " + blocksMined);            }
 
         } catch (SQLException e) {
-            // エラーの詳細を表示
+            e.printStackTrace();
+        }
+
+        // 2番目のクエリ
+        String query2 = "SELECT * FROM placed_blocks;";
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement stmt = conn.prepareStatement(query2);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                // 結果の処理...
+                String world = rs.getString("World");
+                int x = rs.getInt("X");
+                int y = rs.getInt("Y");
+                int z = rs.getInt("Z");
+
+                // 取得したデータを使用して処理（例: コンソールに出力）
+                System.out.println("World: " + world + ", X: " + x + ", Y: " + y + ", Z: " + z);            }
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
