@@ -6,7 +6,7 @@ public class mysqldatabase {
     public static void main(String[] args) {
 
         // データベース接続情報は外部から取得する
-        String url = "jdbc:mysql://localhost:3306/testdb";
+        String url = "jdbc:mysql://localhost:3306/database.db";
         String user = "root";
         String password = "";
 
