@@ -465,7 +465,19 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public void loadData() {
-        // データベースから読み込む
+        try {
+            Map<UUID, PlayerData> dataFromDatabase = mySQLDatabase.loadData();
+            if (!dataFromDatabase.isEmpty()) {
+                blockCount.clear();
+                blockCount.putAll(dataFromDatabase);
+                getLogger().info("データがMySQLデータベースから読み込まれました。");
+                return;
+            }
+        } catch (Exception e) {
+            getLogger().warning("MySQLデータベースからの読み込みに失敗しました: " + e.getMessage());
+        }
+        // エラーが発生した場合はSQLiteからの読み込みに変更
+        // SQLiteデータベースから読み込む
         try {
             // データベース接続の確認とデータの取得
             if (pointsDatabase.checkConnection()) {
@@ -479,7 +491,7 @@ public class Digger extends JavaPlugin implements Listener {
             }
         } catch (SQLException e) {
             getLogger().severe("データベースからの読み込み中にエラーが発生しました: " + e.getMessage());
-            // エラーが発生した場合はYAMLからの読み込みに変更
+            // それでもエラーが発生した場合はYAMLからの読み込みに変更
         }
 
         // YAMLファイルからの読み込みに変更
@@ -536,9 +548,6 @@ public class Digger extends JavaPlugin implements Listener {
             }
         }
     }
-
-
-
 
 
     private void saveToYAML() throws IOException {

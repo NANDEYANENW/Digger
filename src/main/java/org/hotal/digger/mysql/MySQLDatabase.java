@@ -1,19 +1,23 @@
 package org.hotal.digger.mysql;
 
 
-
+import org.bukkit.Location;
 import org.hotal.digger.Digger;
 
-import java.sql.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.UUID;
-import org.bukkit.Location;
-public class MySQLDatabase {
+import java.sql.*;
+import java.util.*;
+public class MySQLDatabase { 
+
+private String url;
+private String user;
+private String password;
+    public MySQLDatabase(Properties prop) {
+        this.url = prop.getProperty("db.url");
+        this.user = prop.getProperty("db.user");
+        this.password = prop.getProperty("db.password");
+    }
     public static void main(String[] args) {
         Properties prop = new Properties();
         try {
@@ -70,34 +74,45 @@ public class MySQLDatabase {
 
     private Connection getConnection() throws SQLException {
         return DriverManager.getConnection("config.properties");
-}   public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
-        String query = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, playerId.toString());
-            stmt.setString(2, playerName);
-            stmt.setInt(3, blocksMined);
-            stmt.setInt(4, blocksMined);
-
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
+    }  public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
+        // プレイヤーデータの保存
+        String playerDataQuery = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
         for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
             UUID playerId = entry.getKey();
             Digger.PlayerData playerData = entry.getValue();
-            // 現在の savePlayerData メソッドを呼び出してデータを保存
-            savePlayerData(playerId, playerData.getPlayerName(), playerData.getBlocksMined());
+
+            try (Connection conn = getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(playerDataQuery)) {
+
+                stmt.setString(1, playerId.toString());
+                stmt.setString(2, playerData.getPlayerName());
+                stmt.setInt(3, playerData.getBlocksMined());
+                stmt.setInt(4, playerData.getBlocksMined());
+
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
-            UUID playerId = entry.getKey();
-           blockCount = entry.getValue();
-            // 現在の savePlayerData メソッドを呼び出してデータを保存
-            savePlayerData(playerId, playerData.blockCount,playerData.blockCount());
+// placedBlocks の保存
+        String placedBlocksQuery = "INSERT INTO placed_blocks (UUID, World, X, Y, Z) VALUES (?, ?, ?, ?, ?);";
+        for (Location loc : placedBlocks) {
+            try (Connection conn = getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(placedBlocksQuery)) {
+                UUID playerId = playerId.getUniqueId;
+                stmt.setString(1,playerId.toString());
+                stmt.setString(2, loc.getWorld().getName());
+                stmt.setInt(3, loc.getBlockX());
+                stmt.setInt(4, loc.getBlockY());
+                stmt.setInt(5, loc.getBlockZ());
+
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
+
     public boolean connect() {
         try (Connection conn = getConnection()) {
             return true;
@@ -114,5 +129,26 @@ public class MySQLDatabase {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public Map<UUID, Digger.PlayerData> loadData() {
+        Map<UUID, Digger.PlayerData> dataMap = new HashMap<>();
+        String query = "SELECT UUID, PlayerName, BlocksMined FROM player_data;";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                UUID uuid = UUID.fromString(rs.getString("UUID"));
+                String playerName = rs.getString("PlayerName");
+                int blocksMined = rs.getInt("BlocksMined");
+
+                dataMap.put(uuid, new Digger.PlayerData(playerName, blocksMined));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dataMap;
     }
 }
