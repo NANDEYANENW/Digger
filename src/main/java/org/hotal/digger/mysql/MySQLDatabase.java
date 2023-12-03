@@ -161,9 +161,25 @@ private String password;
     }
 
     public void savePlacedBlock(UUID playerId, Location loc) {
-        
+        String insertQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";
 
+        try (Connection conn = getSQLiteConnection(); // SQLiteデータベースへの接続を取得
+             PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
 
+            stmt.setString(1, loc.getWorld().getName());
+            stmt.setInt(2, loc.getBlockX());
+            stmt.setInt(3, loc.getBlockY());
+            stmt.setInt(4, loc.getBlockZ());
 
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
- }
+
+    private Connection getSQLiteConnection() {
+        return null;
+    }
+}
+
+
