@@ -101,11 +101,14 @@ private String password;
         }
 // placedBlocks の保存
         String placedBlocksQuery = "INSERT INTO placed_blocks (UUID, World, X, Y, Z) VALUES (?, ?, ?, ?, ?);";
+
         for (Location loc : placedBlocks) {
             try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(placedBlocksQuery)) {
-                UUID playerId = playerId.getUniqueId;
-                stmt.setString(1,playerId.toString());
+
+                UUID playerId = placedBlocksWithUUID.get(loc);
+
+                stmt.setString(1, playerId.toString());
                 stmt.setString(2, loc.getWorld().getName());
                 stmt.setInt(3, loc.getBlockX());
                 stmt.setInt(4, loc.getBlockY());
@@ -118,7 +121,7 @@ private String password;
         }
     }
 
-    public boolean connect() {
+        public boolean connect() {
         try (Connection conn = getConnection()) {
             return true;
         } catch (SQLException e) {
@@ -156,4 +159,11 @@ private String password;
         }
         return dataMap;
     }
-}
+
+    public void savePlacedBlock(UUID playerId, Location loc) {
+        
+
+
+
+    }
+ }

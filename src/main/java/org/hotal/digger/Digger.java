@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
 
 public class Digger extends JavaPlugin implements Listener {
 
+    private Map<Location, UUID> placedBlocksWithUUID = new HashMap<>();
+
+
     private MySQLDatabase mySQLDatabase;
     private PointsDatabase pointsDatabase;
     private FileConfiguration dataConfig;
@@ -206,7 +209,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
 
 
-         // データを保存する
+        // データを保存する
         try {
             pointsDatabase.saveData(playerDataMap, placedBlocks); // playerDataMapを使用
         } catch (SQLException e) {
@@ -315,8 +318,6 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-
-
     private void saveUpdateIntervalToConfig(long interval) {
         this.getConfig().set("scoreboardUpdateInterval", interval);
         this.saveConfig();
@@ -325,8 +326,18 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+
+        Player player = event.getPlayer();
+        UUID playerId = player.getUniqueId();
+        Location loc = event.getBlock().getLocation();
+
+        // ここで playerId と loc の関連付けを保存
+        placedBlocksWithUUID.put(loc, playerId);
+
+
         placedBlocks.add(event.getBlock().getLocation());
     }
+
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
@@ -532,6 +543,18 @@ public class Digger extends JavaPlugin implements Listener {
         return new Location(world, x, y, z);
     }
 
+
+    // データベースへの保存処理
+    public void savePlacedBlocks() {
+        for (Map.Entry<Location, UUID> entry : placedBlocksWithUUID.entrySet()) {
+            Location loc = entry.getKey();
+            UUID playerId = entry.getValue();
+
+            // ここでデータベース保存処理を行う
+            mySQLDatabase.savePlacedBlock(playerId, loc);
+        }
+    }
+
     public void saveData() throws IOException {
         try {
             if (mySQLDatabase.isConnected()) {
@@ -575,6 +598,8 @@ public class Digger extends JavaPlugin implements Listener {
                 getLogger().info("データをYAMLファイルに保存しました。");
             }
         }
+
+
 
 
 
