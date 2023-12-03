@@ -69,10 +69,8 @@ public class MySQLDatabase {
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, user, password);
-    }
-
-    public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
+        return DriverManager.getConnection("config.properties");
+}   public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
         String query = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
