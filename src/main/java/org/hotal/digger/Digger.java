@@ -23,6 +23,8 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.hotal.digger.ench.EnchantManager;
 import org.hotal.digger.mysql.MySQLDatabase;
 import org.hotal.digger.sql.PointsDatabase;
+
+import java.io.FileInputStream;
 import java.sql.*;
 import java.io.File;
 import java.io.IOException;
@@ -87,10 +89,20 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public void onEnable() { //起動時の初期化処理
         // Configファイルをロードまたは作成
+        // Configファイルをロードまたは作成
         saveDefaultConfig();
-        pointsDatabase = new PointsDatabase();
 
+        // Properties オブジェクトの初期化
         Properties prop = new Properties();
+        try {
+            // config.properties ファイルを読み込む
+            prop.load(new FileInputStream("config.properties"));
+        } catch (IOException e) {
+            getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
+            // 必要に応じてプラグインを無効化
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         // MySQLデータベース接続の初期化
         mySQLDatabase = new MySQLDatabase(prop);
@@ -553,7 +565,7 @@ public class Digger extends JavaPlugin implements Listener {
     public void saveData() throws IOException {
         try {
             if (mySQLDatabase.isConnected()) {
-                mySQLDatabase.savePlayerData(blockCount, placedBlocks);
+                mySQLDatabase.savePlayerData(blockCount, placedBlocks, placedBlocksWithUUID);
                 getLogger().info("データをMySQLデータベースに保存しました。");
             } else {
                 throw new SQLException("MySQLデータベースに接続できませんでした。");

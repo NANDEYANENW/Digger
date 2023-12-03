@@ -8,20 +8,34 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
-public class MySQLDatabase { 
+public class MySQLDatabase {
 
-private String url;
-private String user;
-private String password;
-    public MySQLDatabase(Properties prop) {
-        this.url = prop.getProperty("db.url");
-        this.user = prop.getProperty("db.user");
-        this.password = prop.getProperty("db.password");
-    }
+        private String url;
+        private String user;
+        private String password;
 
-    public MySQLDatabase() {
-        
-    }
+        public MySQLDatabase(Properties prop) {
+            prop = new Properties();
+            try {
+                // config.properties ファイルを読み込む
+                prop.load(new FileInputStream("config.properties"));
+                this.url = prop.getProperty("db.url");
+                this.user = prop.getProperty("db.user");
+                this.password = prop.getProperty("db.password");
+            } catch (IOException e) {
+                e.printStackTrace();
+                // エラー処理...
+            }
+        }
+
+        private Connection getConnection() throws SQLException {
+            // データベースへの接続を確立
+            return DriverManager.getConnection(url, user, password);
+        }
+
+
+
+
 
     public static void main(String[] args) {
         Properties prop = new Properties();
@@ -77,9 +91,7 @@ private String password;
         }
     }
 
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("config.properties");
-    }  public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
+    public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks, Map<Location, UUID> placedBlocksWithUUID) {
         // プレイヤーデータの保存
         String playerDataQuery = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
         for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
@@ -100,13 +112,14 @@ private String password;
             }
         }
 // placedBlocks の保存
+        // placedBlocks の保存
         String placedBlocksQuery = "INSERT INTO placed_blocks (UUID, World, X, Y, Z) VALUES (?, ?, ?, ?, ?);";
 
         for (Location loc : placedBlocks) {
             try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(placedBlocksQuery)) {
 
-                UUID playerId = placedBlocksWithUUID.get(loc);
+                UUID playerId = placedBlocksWithUUID.get(loc); // ここでUUIDを取得
 
                 stmt.setString(1, playerId.toString());
                 stmt.setString(2, loc.getWorld().getName());
