@@ -1,13 +1,13 @@
 package org.hotal.digger.sql;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.hotal.digger.Digger;
+
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.hotal.digger.Digger;
 
 public class PointsDatabase {
     private Connection connection;

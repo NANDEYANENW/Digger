@@ -1,10 +1,11 @@
 package org.hotal.digger;
 
-import org.bukkit.*;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,25 +14,21 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.Material;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.hotal.digger.ench.EnchantManager;
 import org.hotal.digger.mysql.MySQLDatabase;
 import org.hotal.digger.sql.PointsDatabase;
 
-import java.sql.SQLException;
-import java.util.*;
-
-import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Digger extends JavaPlugin implements Listener {
 
