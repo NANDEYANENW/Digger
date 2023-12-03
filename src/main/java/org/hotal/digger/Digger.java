@@ -53,7 +53,7 @@ public class Digger extends JavaPlugin implements Listener {
     private static Digger instance;
     private Boolean currentSetting = null;
 
-    public static double rewardProbability = 0.03;
+    public static double rewardProbability = 0.02;
 
 
     public ToolMoney toolMoney = new ToolMoney(getConfig(), this);
