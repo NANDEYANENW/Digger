@@ -18,6 +18,11 @@ private String password;
         this.user = prop.getProperty("db.user");
         this.password = prop.getProperty("db.password");
     }
+
+    public MySQLDatabase() {
+        
+    }
+
     public static void main(String[] args) {
         Properties prop = new Properties();
         try {

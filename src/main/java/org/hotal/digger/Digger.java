@@ -352,14 +352,18 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    public void onPlayerQuit(PlayerQuitEvent event) throws IOException {
         saveData();
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            saveData();
+            try {
+                saveData();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -457,8 +461,12 @@ public class Digger extends JavaPlugin implements Listener {
 
         @Override
     public void onDisable() {
-        saveData();
-        getConfig().set("update-interval", scoreboardUpdateInterval);
+            try {
+                saveData();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            getConfig().set("update-interval", scoreboardUpdateInterval);
         getConfig().set("world-blacklist", worldBlacklist);
         saveConfig();
 
