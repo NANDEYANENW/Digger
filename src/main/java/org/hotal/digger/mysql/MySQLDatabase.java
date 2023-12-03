@@ -5,7 +5,7 @@ import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class mysqldatabase {
+public class MySQLDatabase {
     public static void main(String[] args) {
         Properties prop = new Properties();
         try {

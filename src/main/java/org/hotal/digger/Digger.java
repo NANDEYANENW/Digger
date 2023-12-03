@@ -23,6 +23,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.hotal.digger.ench.EnchantManager;
+import org.hotal.digger.mysql.MySQLDatabase;
 import org.hotal.digger.sql.PointsDatabase;
 
 import java.sql.SQLException;
@@ -34,6 +35,7 @@ import java.io.IOException;
 
 public class Digger extends JavaPlugin implements Listener {
 
+    private MySQLDatabase mySQLDatabase;
     private PointsDatabase pointsDatabase;
     private FileConfiguration dataConfig;
     private File dataFile;
@@ -84,18 +86,20 @@ public class Digger extends JavaPlugin implements Listener {
         // Configファイルをロードまたは作成
         saveDefaultConfig();
         pointsDatabase = new PointsDatabase();
+        mySQLDatabase = new MySQLDatabase();
 
         // データベース接続のオープン
+        if (!mySQLDatabase.connect()) {
+            getLogger().severe("MySQLデータベースへの接続に失敗しました。");
+        }
         try {
             pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
         } catch (SQLException e) {
-            getLogger().severe("データベース接続時にエラーが発生しました: " + e.getMessage());
+            getLogger().severe("SQLiteデータベース接続時にエラーが発生しました: " + e.getMessage());
             // 必要に応じてプラグインを無効化
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-
-
         try {
             pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
         } catch (SQLException e) {
@@ -176,7 +180,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
         Commands commandExecutor = new Commands(this, toolMoneyInstance);
-       ;
+
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
 
@@ -510,6 +514,16 @@ public class Digger extends JavaPlugin implements Listener {
     public void saveData() {
         // データベースに保存を試みる
         try {
+            if (mySQLDatabase.isConnected()) {
+                mySQLDatabase.savePlayerData(blockCount, placedBlocks);
+                getLogger().info("データをMySQLデータベースに保存しました。");
+            } else {
+
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        try {
             // データ変換
             Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBlocksMined()));
@@ -525,6 +539,9 @@ public class Digger extends JavaPlugin implements Listener {
 
         }
     }
+
+
+
 
         private void saveToYAML() throws IOException {
             if (dataConfig != null) {
