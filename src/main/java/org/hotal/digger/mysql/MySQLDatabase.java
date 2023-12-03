@@ -1,10 +1,18 @@
 package org.hotal.digger.mysql;
 
+
+
+import org.hotal.digger.Digger;
+
 import java.sql.*;
+
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.IOException;
-
+import java.util.UUID;
+import org.bukkit.Location;
 public class MySQLDatabase {
     public static void main(String[] args) {
         Properties prop = new Properties();
@@ -57,6 +65,56 @@ public class MySQLDatabase {
 
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks) {
+        String query = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, playerId.toString());
+            stmt.setString(2, playerName);
+            stmt.setInt(3, blocksMined);
+            stmt.setInt(4, blocksMined);
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
+            UUID playerId = entry.getKey();
+            Digger.PlayerData playerData = entry.getValue();
+            // 現在の savePlayerData メソッドを呼び出してデータを保存
+            savePlayerData(playerId, playerData.getPlayerName(), playerData.getBlocksMined());
+        }
+        for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
+            UUID playerId = entry.getKey();
+           blockCount = entry.getValue();
+            // 現在の savePlayerData メソッドを呼び出してデータを保存
+            savePlayerData(playerId, playerData.blockCount,playerData.blockCount());
+        }
+    }
+    public boolean connect() {
+        try (Connection conn = getConnection()) {
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isConnected() {
+        try (Connection conn = getConnection()) {
+            return conn != null && !conn.isClosed();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

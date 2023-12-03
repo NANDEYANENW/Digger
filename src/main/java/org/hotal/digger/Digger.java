@@ -87,6 +87,10 @@ public class Digger extends JavaPlugin implements Listener {
         saveDefaultConfig();
         pointsDatabase = new PointsDatabase();
         mySQLDatabase = new MySQLDatabase();
+        Properties prop = new Properties();
+
+        // MySQLデータベース接続の初期化
+        mySQLDatabase = new MySQLDatabase(prop);
 
         // データベース接続のオープン
         if (!mySQLDatabase.connect()) {
@@ -511,39 +515,33 @@ public class Digger extends JavaPlugin implements Listener {
         return new Location(world, x, y, z);
     }
 
-    public void saveData() {
-        // データベースに保存を試みる
+    public void saveData() throws IOException {
         try {
             if (mySQLDatabase.isConnected()) {
                 mySQLDatabase.savePlayerData(blockCount, placedBlocks);
                 getLogger().info("データをMySQLデータベースに保存しました。");
             } else {
-
+                throw new SQLException("MySQLデータベースに接続できませんでした。");
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            // データ変換
-            Map<UUID, Integer> simpleBlockCount = blockCount.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBlocksMined()));
-
-            // データベースに保存
-            pointsDatabase.saveData(blockCount, placedBlocks);
-            getLogger().info("データをデータベースに保存しました。");
-
-            // YAMLファイルに保存
-            saveToYAML();
-        } catch (SQLException | IOException e) {
-            getLogger().severe("データの保存中にエラーが発生しました。YAMLファイルに変更しています: " + e.getMessage());
-
+            getLogger().warning("MySQLデータベースへの保存に失敗しました。SQLiteに保存を試みます: " + e.getMessage());
+            try {
+                // SQLiteへの保存処理
+                pointsDatabase.saveData(blockCount, placedBlocks);
+                getLogger().info("データをSQLiteデータベースに保存しました。");
+            } catch (SQLException ex) {
+                getLogger().severe("SQLiteデータベースへの保存にも失敗しました。YAMLファイルに保存します: " + ex.getMessage());
+                // YAMLファイルへの保存処理
+                saveToYAML();
+            }
         }
     }
 
 
 
 
-        private void saveToYAML() throws IOException {
+
+    private void saveToYAML() throws IOException {
             if (dataConfig != null) {
                 for (Map.Entry<UUID, PlayerData> entry : blockCount.entrySet()) {
                     UUID uuid = entry.getKey();
