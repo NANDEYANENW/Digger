@@ -23,12 +23,13 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.hotal.digger.ench.EnchantManager;
 import org.hotal.digger.mysql.MySQLDatabase;
 import org.hotal.digger.sql.PointsDatabase;
-
+import java.sql.*;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.sql.DriverManager.getConnection;
 
 public class Digger extends JavaPlugin implements Listener {
 
@@ -65,6 +66,8 @@ public class Digger extends JavaPlugin implements Listener {
     private final List<Location> placedBlocks = new ArrayList<>();
     private List<String> worldBlacklist = new ArrayList<>();
     private Material toolType;
+    private Connection connection;
+    private String placedBlocksQuery;
 
     public Digger() {
         instance = this;
@@ -86,7 +89,7 @@ public class Digger extends JavaPlugin implements Listener {
         // Configファイルをロードまたは作成
         saveDefaultConfig();
         pointsDatabase = new PointsDatabase();
-        mySQLDatabase = new MySQLDatabase();
+
         Properties prop = new Properties();
 
         // MySQLデータベース接続の初期化
@@ -103,11 +106,6 @@ public class Digger extends JavaPlugin implements Listener {
             // 必要に応じてプラグインを無効化
             getServer().getPluginManager().disablePlugin(this);
             return;
-        }
-        try {
-            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
         try {
             pointsDatabase.saveData(blockCount, placedBlocks);
@@ -187,7 +185,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
-
+        getCommand("sb").setExecutor(commandExecutor);
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
 
@@ -197,7 +195,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     // データの保存
     public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
-        Map<UUID, Digger.PlayerData> playerDataMap = new HashMap<>();
+        Map<UUID, PlayerData> playerDataMap = new HashMap<>();
         for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
             // プレイヤーのUUIDを取得
             UUID playerId = entry.getKey();
@@ -326,17 +324,14 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+            Player player = event.getPlayer();
+            UUID playerId = player.getUniqueId();
+            Location loc = event.getBlock().getLocation();
 
-        Player player = event.getPlayer();
-        UUID playerId = player.getUniqueId();
-        Location loc = event.getBlock().getLocation();
-
-        // ここで playerId と loc の関連付けを保存
-        placedBlocksWithUUID.put(loc, playerId);
-
-
-        placedBlocks.add(event.getBlock().getLocation());
+            placedBlocksWithUUID.put(loc, playerId);
     }
+
+
 
 
     @EventHandler
@@ -551,7 +546,7 @@ public class Digger extends JavaPlugin implements Listener {
             UUID playerId = entry.getValue();
 
             // ここでデータベース保存処理を行う
-            mySQLDatabase.savePlacedBlock(playerId, loc);
+            mySQLDatabase.savePlacedBlock(playerId,loc);
         }
     }
 
@@ -566,16 +561,34 @@ public class Digger extends JavaPlugin implements Listener {
         } catch (Exception e) {
             getLogger().warning("MySQLデータベースへの保存に失敗しました。SQLiteに保存を試みます: " + e.getMessage());
             try {
-                // SQLiteへの保存処理
                 pointsDatabase.saveData(blockCount, placedBlocks);
                 getLogger().info("データをSQLiteデータベースに保存しました。");
             } catch (SQLException ex) {
                 getLogger().severe("SQLiteデータベースへの保存にも失敗しました。YAMLファイルに保存します: " + ex.getMessage());
-                // YAMLファイルへの保存処理
                 saveToYAML();
             }
         }
-    }
+
+
+            for (Location loc : placedBlocks) {
+                try (Connection conn = getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(placedBlocksQuery)) {
+
+                    UUID playerId = placedBlocksWithUUID.get(loc);
+
+                    stmt.setString(1, playerId.toString());
+                    stmt.setString(2, loc.getWorld().getName());
+                    stmt.setInt(3, loc.getBlockX());
+                    stmt.setInt(4, loc.getBlockY());
+                    stmt.setInt(5, loc.getBlockZ());
+
+                    stmt.executeUpdate();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
 
 
     private void saveToYAML() throws IOException {
@@ -629,6 +642,15 @@ public class Digger extends JavaPlugin implements Listener {
 
             }
         }
+    }
+
+    public Connection getConnection() {
+        Connection connection = null;
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
 
