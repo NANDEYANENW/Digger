@@ -93,20 +93,25 @@ public class Digger extends JavaPlugin implements Listener {
         Properties prop = new Properties();
 
         // config.properties ファイルの処理
+        // config.properties ファイルのパスを修正
         File configFile = new File(getDataFolder(), "config.properties");
+        if (!configFile.exists()) {
+            getLogger().severe("config.properties ファイルが見つかりません。");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        prop = new Properties();
         try {
-            if (!configFile.exists()) {
-                configFile.getParentFile().mkdirs();
-                configFile.createNewFile();
-                // ここで初期のデータベース設定を行うかもしれません
-                prop.store(new FileWriter(configFile), "Database Configurations");
-            }
             prop.load(new FileInputStream(configFile));
+            mySQLDatabase = new MySQLDatabase(prop);
+            // ...（他の初期化コード）
         } catch (IOException e) {
             getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
 
         // MySQLDatabase の初期化
         mySQLDatabase = new MySQLDatabase(prop);

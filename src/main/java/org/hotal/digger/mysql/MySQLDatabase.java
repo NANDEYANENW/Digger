@@ -4,30 +4,25 @@ package org.hotal.digger.mysql;
 import org.bukkit.Location;
 import org.hotal.digger.Digger;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 public class MySQLDatabase {
 
-        private String url;
-        private String user;
-        private String password;
+    private String url;
+    private String user;
+    private String password;
 
-        public MySQLDatabase(Properties prop) {
-            try {
-                // config.properties ファイルを読み込む
-                prop.load(new FileInputStream("config.properties"));
-                this.url = prop.getProperty("db.url");
-                this.user = prop.getProperty("db.user");
-                this.password = prop.getProperty("db.password");
-            } catch (IOException e) {
-                e.printStackTrace();
-                // エラー処理...
-            }
-        }
+    public MySQLDatabase(Properties prop) {
+        this.url = prop.getProperty("db.url");
+        this.user = prop.getProperty("db.user");
+        this.password = prop.getProperty("db.password");
+    }
 
-        private Connection getConnection() throws SQLException {
+
+    private Connection getConnection() throws SQLException {
             // データベースへの接続を確立
             return DriverManager.getConnection(url, user, password);
         }
@@ -100,10 +95,10 @@ public class MySQLDatabase {
 
     public Map<UUID, Digger.PlayerData> loadData() {
         Map<UUID, Digger.PlayerData> dataMap = new HashMap<>();
-        String query = "SELECT UUID, PlayerName, BlocksMined FROM player_data;";
+
 
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
+             PreparedStatement stmt = conn.prepareStatement(url);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
