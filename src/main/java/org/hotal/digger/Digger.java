@@ -565,33 +565,52 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public void saveData() {
+        boolean mysqlSaved = saveToMySQL();
+        boolean sqliteSaved = saveToSQLite();
+        boolean yamlSaved = false;
+
+            if (!mysqlSaved) {
+                getLogger().warning("MySQLデータベースへの保存に失敗しました。");
+            }
+            if (!sqliteSaved) {
+                getLogger().warning("SQLiteデータベースへの保存に失敗しました。");
+                try {
+                    saveToYAML();
+                    if (!yamlSaved) {
+                        getLogger().severe("YAMLファイルへの保存に失敗しました。");
+                    }
+                } catch (IOException e) {
+                    getLogger().severe("YAMLファイルの保存中にエラーが発生しました: " + e.getMessage());
+                }
+
+        }
+    }
+
+    private boolean saveToMySQL() {
         try {
             if (mySQLDatabase.isConnected()) {
                 mySQLDatabase.savePlayerData(blockCount, placedBlocks, placedBlocksWithUUID);
                 getLogger().info("データをMySQLデータベースに保存しました。");
+                return true;
             } else {
                 throw new SQLException("MySQLデータベースに接続できませんでした。");
             }
         } catch (Exception e) {
-            getLogger().warning("MySQLデータベースへの保存に失敗しました。SQLiteに保存を試みます: " + e.getMessage());
-            try {
-                pointsDatabase.saveData(blockCount, placedBlocks);
-                getLogger().info("データをSQLiteデータベースに保存しました。");
-            } catch (SQLException ex) {
-                getLogger().severe("SQLiteデータベースへの保存にも失敗しました。YAMLファイルに保存します: " + ex.getMessage());
-                try {
-                    saveToYAML();
-                } catch (IOException ex2) {
-                    getLogger().severe("YAMLファイルへの保存中にエラーが発生しました: " + ex2.getMessage());
-                }
-            }
+            getLogger().warning("MySQLデータベースへの保存に失敗しました: " + e.getMessage());
+            return false;
         }
     }
 
-
-
-
-
+    private boolean saveToSQLite() {
+        try {
+            pointsDatabase.saveData(blockCount, placedBlocks);
+            getLogger().info("データをSQLiteデータベースに保存しました。");
+            return true;
+        } catch (SQLException e) {
+            getLogger().severe("SQLiteデータベースへの保存に失敗しました: " + e.getMessage());
+            return false;
+        }
+    }
 
 
     private void saveToYAML() throws IOException {
