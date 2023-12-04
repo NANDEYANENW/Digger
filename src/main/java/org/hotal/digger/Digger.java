@@ -281,8 +281,6 @@ public class Digger extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         // デバッグメッセージの追加
-        getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));
-
         if (!(sender instanceof Player)) {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
@@ -293,12 +291,12 @@ public class Digger extends JavaPlugin implements Listener {
             // 引数が'on'または'off'であるかを確認
             if (args.length == 1) {
                 if (args[0].equalsIgnoreCase("on")) {
-                    // スコアボードをオンにする
+                    getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));    // スコアボードをオンにする
                     scoreboardToggles.put(player.getUniqueId(), true);
                     updateScoreboard(player); // これはあなたのスコアボードを更新するメソッドです
                     player.sendMessage(ChatColor.GREEN + "スコアボードを表示しました。");
                 } else if (args[0].equalsIgnoreCase("off")) {
-                    // スコアボードをオフにする
+                    getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));   // スコアボードをオフにする
                     scoreboardToggles.put(player.getUniqueId(), false);
                     player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
                     player.sendMessage(ChatColor.GREEN + "スコアボードを非表示にしました。");
@@ -410,7 +408,7 @@ public class Digger extends JavaPlugin implements Listener {
         if (showScoreboard) {
             // スコアボードのセットアップ
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.LIGHT_PURPLE + "整地の順位");
+            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN+ "整地の順位");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             // ソートされたリストを取得
