@@ -25,12 +25,13 @@ import org.hotal.digger.mysql.MySQLDatabase;
 import org.hotal.digger.sql.PointsDatabase;
 
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.sql.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import java.util.Properties;
 import static java.sql.DriverManager.getConnection;
 
 public class Digger extends JavaPlugin implements Listener {
@@ -87,26 +88,63 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     @Override
-    public void onEnable() { //起動時の初期化処理
-        // Configファイルをロードまたは作成
-        // Configファイルをロードまたは作成
+    public void onEnable() {
         saveDefaultConfig();
-
-        // Properties オブジェクトの初期化
         Properties prop = new Properties();
+        startScoreboardUpdater();
+        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
+
+        ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
+        Commands commandExecutor = new Commands(this, toolMoneyInstance);
+
+        getCommand("reload").setExecutor(commandExecutor);
+        getCommand("set").setExecutor(commandExecutor);
+        getCommand("sb").setExecutor(commandExecutor);
+        if (this.getConfig().contains("scoreboardUpdateInterval")) {
+            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
         try {
-            // config.properties ファイルを読み込む
             prop.load(new FileInputStream("config.properties"));
+            if (!mySQLDatabase.connect()) {
+                getLogger().severe("MySQLデータベースへの接続に失敗しました。");
+
+            }
         } catch (IOException e) {
             getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
-            // 必要に応じてプラグインを無効化
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+
         }
 
-        // MySQLデータベース接続の初期化
-        mySQLDatabase = new MySQLDatabase(prop);
+        pointsDatabase = new PointsDatabase();
+        try {
+            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
+        } catch (SQLException e) {
+            getLogger().severe("SQLiteデータベース接続時にエラーが発生しました: " + e.getMessage());
 
+        }
+
+        // config.properties ファイルのパス
+        File configFile = new File(getDataFolder(), "config.properties");
+        prop = new Properties();
+
+        if (!configFile.exists()) {
+            try {
+                configFile.getParentFile().mkdirs(); // 必要に応じてディレクトリを作成
+                configFile.createNewFile(); // ファイルを作成
+
+                // ファイルに書き込む
+                prop.store(new FileWriter(configFile), "Database Configurations");
+            } catch (IOException e) {
+                getLogger().severe("config.properties ファイルの作成に失敗しました: " + e.getMessage());
+
+            }
+        } else {
+            try {
+                // 既存のファイルを読み込む
+                prop.load(new FileInputStream(configFile));
+            } catch (IOException e) {
+                getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
+
+            }
+        }
         // データベース接続のオープン
         if (!mySQLDatabase.connect()) {
             getLogger().severe("MySQLデータベースへの接続に失敗しました。");
@@ -115,8 +153,7 @@ public class Digger extends JavaPlugin implements Listener {
             pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
         } catch (SQLException e) {
             getLogger().severe("SQLiteデータベース接続時にエラーが発生しました: " + e.getMessage());
-            // 必要に応じてプラグインを無効化
-            getServer().getPluginManager().disablePlugin(this);
+
             return;
         }
         try {
@@ -143,16 +180,16 @@ public class Digger extends JavaPlugin implements Listener {
         rewardMap.put(Material.STONE_SHOVEL, 100);
         rewardMap.put(Material.WOODEN_PICKAXE, 50);
         rewardMap.put(Material.WOODEN_SHOVEL, 50);
-
         FileConfiguration dataConfig;
+        dataFile = new File(getDataFolder(),"config.properties");
         dataFile = new File(getDataFolder(), "player-data.yml");
         if (!dataFile.exists()) {
             dataFile.getParentFile().mkdirs();
             saveResource("player-data.yml", false);
+            saveResource("config.properties",false);
         }
         dataConfig = YamlConfiguration.loadConfiguration(dataFile);
-
-        File configFile = new File(getDataFolder(), "config.yml");
+        configFile = new File(getDataFolder(), "config.yml");
 
         reloadConfig();  // すでに存在する config.yml の内容を読み込む
 
@@ -188,18 +225,7 @@ public class Digger extends JavaPlugin implements Listener {
 
             }
         }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
-        startScoreboardUpdater();
 
-        Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
-
-        ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
-        Commands commandExecutor = new Commands(this, toolMoneyInstance);
-
-        getCommand("reload").setExecutor(commandExecutor);
-        getCommand("set").setExecutor(commandExecutor);
-        getCommand("sb").setExecutor(commandExecutor);
-        if (this.getConfig().contains("scoreboardUpdateInterval")) {
-            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
 
         }
 
@@ -280,29 +306,11 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
         if (!(sender instanceof Player)) {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
         Player player = (Player) sender;
-
-        if (cmd.getName().equalsIgnoreCase("reload")) {
-            if (!player.hasPermission("digger.reload")) {
-                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                return true;
-            }
-
-            this.reloadConfig();
-            Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
-            player.sendMessage("§a config.ymlを再読み込みしました。");
-            return true;
-        }
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみが実行できます。");
-            return true;
-        }
-
         // コマンドが'digger:scoreboard'であるかを確認
         if (cmd.getName().equalsIgnoreCase("sb")) {
             // 引数が'on'または'off'であるかを確認
@@ -374,11 +382,7 @@ public class Digger extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            try {
-                saveData();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            saveData();
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -473,15 +477,13 @@ public class Digger extends JavaPlugin implements Listener {
             viewingPlayer.setScoreboard(scoreboard);
         }
     }
-
-        @Override
+    @Override
     public void onDisable() {
-            try {
-                saveData();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            getConfig().set("update-interval", scoreboardUpdateInterval);
+        if (mySQLDatabase != null && mySQLDatabase.isConnected()) {
+            saveData();
+        }
+        saveData();
+        getConfig().set("update-interval", scoreboardUpdateInterval);
         getConfig().set("world-blacklist", worldBlacklist);
         saveConfig();
 
@@ -562,7 +564,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-    public void saveData() throws IOException {
+    public void saveData() {
         try {
             if (mySQLDatabase.isConnected()) {
                 mySQLDatabase.savePlayerData(blockCount, placedBlocks, placedBlocksWithUUID);
@@ -577,29 +579,18 @@ public class Digger extends JavaPlugin implements Listener {
                 getLogger().info("データをSQLiteデータベースに保存しました。");
             } catch (SQLException ex) {
                 getLogger().severe("SQLiteデータベースへの保存にも失敗しました。YAMLファイルに保存します: " + ex.getMessage());
-                saveToYAML();
-            }
-        }
-
-
-            for (Location loc : placedBlocks) {
-                try (Connection conn = getConnection();
-                     PreparedStatement stmt = conn.prepareStatement(placedBlocksQuery)) {
-
-                    UUID playerId = placedBlocksWithUUID.get(loc);
-
-                    stmt.setString(1, playerId.toString());
-                    stmt.setString(2, loc.getWorld().getName());
-                    stmt.setInt(3, loc.getBlockX());
-                    stmt.setInt(4, loc.getBlockY());
-                    stmt.setInt(5, loc.getBlockZ());
-
-                    stmt.executeUpdate();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                try {
+                    saveToYAML();
+                } catch (IOException ex2) {
+                    getLogger().severe("YAMLファイルへの保存中にエラーが発生しました: " + ex2.getMessage());
                 }
             }
         }
+    }
+
+
+
+
 
 
 
