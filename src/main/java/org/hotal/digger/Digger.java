@@ -70,7 +70,7 @@ public class Digger extends JavaPlugin implements Listener {
     private List<String> worldBlacklist = new ArrayList<>();
     private Material toolType;
     private Connection connection;
-    private String placedBlocksQuery;
+
 
     public Digger() {
         instance = this;
@@ -206,7 +206,7 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     // データの保存
-    public void savePlayerData(Map<UUID, Integer> blockCount, List<Location> placedBlocks) {
+    public void savePlayerData(Map<UUID, Integer> blockCount) {
         Map<UUID, PlayerData> playerDataMap = new HashMap<>();
         for (Map.Entry<UUID, Integer> entry : blockCount.entrySet()) {
             // プレイヤーのUUIDを取得
@@ -280,6 +280,9 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        // デバッグメッセージの追加
+        getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));
+
         if (!(sender instanceof Player)) {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
@@ -331,7 +334,10 @@ public class Digger extends JavaPlugin implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        if (worldBlacklist.contains(player.getWorld().getName()) ||
+        World world = player.getWorld();
+        getLogger().info("Block broken by player: " + player.getName()); // デバッグログ
+
+        if (worldBlacklist.contains(world.getName()) ||
                 placedBlocks.remove(event.getBlock().getLocation()) ||
                 isBlockBlacklisted(event.getBlock().getType())) {
             return;
@@ -339,8 +345,9 @@ public class Digger extends JavaPlugin implements Listener {
 
         updateBlockCount(player);
         giveReward(player);
-        enchantManager.applyEfficiencyEnchant(player,getBlocksMined(player));
+        enchantManager.applyEfficiencyEnchant(player, getBlocksMined(player));
     }
+
 
     private int getBlocksMined(Player player) {
       UUID playerID = player.getUniqueId();
@@ -355,29 +362,21 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            saveData();
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            loadData();
-            Bukkit.getScheduler().runTask(this, () -> {
 
-            });
-        });
+            saveData();
+            loadData();
+
     }
 
     public void updateBlockCount(Player player) {
         UUID playerID = player.getUniqueId();
-        // プレイヤーデータの取得、なければ新しいプレイヤーデータを作成
         PlayerData data = blockCount.getOrDefault(playerID, new PlayerData(player.getName(), 0));
-        // 採掘数を1増やす
+        int before = data.getBlocksMined(); // 更新前のカウント
         data.setBlocksMined(data.getBlocksMined() + 1);
-        // 更新されたプレイヤーデータをマップに戻す
         blockCount.put(playerID, data);
+        getLogger().info("Blocks mined by " + player.getName() + ": " + before + " -> " + data.getBlocksMined()); // デバッグログ
     }
+
 
 
 
@@ -397,14 +396,16 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-    public void updateAllPlayersScoreboard () {
-        // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
+    public void updateAllPlayersScoreboard() {
+        getLogger().info("Updating scoreboard for all players");
         for (Player player : Bukkit.getOnlinePlayers()) {
+            getLogger().info("Updating scoreboard for player: " + player.getName());
             updateScoreboard(player);
         }
     }
 
     public void updateScoreboard(Player viewingPlayer) {
+        getLogger().info("Updating scoreboard for player: " + viewingPlayer.getName());
         Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
         if (showScoreboard) {
             // スコアボードのセットアップ
@@ -449,7 +450,9 @@ public class Digger extends JavaPlugin implements Listener {
 
             // スコアボードをプレイヤーに適用
             viewingPlayer.setScoreboard(scoreboard);
-        }
+        } else {
+        getLogger().info("Scoreboard is toggled off for player: " + viewingPlayer.getName());
+    }
     }
     @Override
     public void onDisable() {
@@ -545,7 +548,7 @@ public class Digger extends JavaPlugin implements Listener {
     public void saveData() {
         boolean mysqlSaved = saveToMySQL();
         boolean sqliteSaved = saveToSQLite();
-        boolean yamlSaved = false;
+        boolean yamlSaved = true;
 
             if (!mysqlSaved) {
                 getLogger().warning("MySQLデータベースへの保存に失敗しました。");
