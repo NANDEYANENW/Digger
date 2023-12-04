@@ -91,6 +91,36 @@ public class Digger extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         Properties prop = new Properties();
+
+        // config.properties ファイルの処理
+        File configFile = new File(getDataFolder(), "config.properties");
+        try {
+            if (!configFile.exists()) {
+                configFile.getParentFile().mkdirs();
+                configFile.createNewFile();
+                // ここで初期のデータベース設定を行うかもしれません
+                prop.store(new FileWriter(configFile), "Database Configurations");
+            }
+            prop.load(new FileInputStream(configFile));
+        } catch (IOException e) {
+            getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        // MySQLDatabase の初期化
+        mySQLDatabase = new MySQLDatabase(prop);
+        if (!mySQLDatabase.connect()) {
+            getLogger().severe("MySQLデータベースへの接続に失敗しました。");
+        }
+
+        // PointsDatabase の初期化
+        pointsDatabase = new PointsDatabase();
+        try {
+            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
+        } catch (SQLException e) {
+            getLogger().severe("SQLiteデータベースの初期化に失敗しました: " + e.getMessage());
+        }
         startScoreboardUpdater();
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
 
@@ -102,67 +132,6 @@ public class Digger extends JavaPlugin implements Listener {
         getCommand("sb").setExecutor(commandExecutor);
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
-        try {
-            prop.load(new FileInputStream("config.properties"));
-            if (!mySQLDatabase.connect()) {
-                getLogger().severe("MySQLデータベースへの接続に失敗しました。");
-
-            }
-        } catch (IOException e) {
-            getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
-
-        }
-
-        pointsDatabase = new PointsDatabase();
-        try {
-            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
-        } catch (SQLException e) {
-            getLogger().severe("SQLiteデータベース接続時にエラーが発生しました: " + e.getMessage());
-
-        }
-
-        // config.properties ファイルのパス
-        File configFile = new File(getDataFolder(), "config.properties");
-        prop = new Properties();
-
-        if (!configFile.exists()) {
-            try {
-                configFile.getParentFile().mkdirs(); // 必要に応じてディレクトリを作成
-                configFile.createNewFile(); // ファイルを作成
-
-                // ファイルに書き込む
-                prop.store(new FileWriter(configFile), "Database Configurations");
-            } catch (IOException e) {
-                getLogger().severe("config.properties ファイルの作成に失敗しました: " + e.getMessage());
-
-            }
-        } else {
-            try {
-                // 既存のファイルを読み込む
-                prop.load(new FileInputStream(configFile));
-            } catch (IOException e) {
-                getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
-
-            }
-        }
-        // データベース接続のオープン
-        if (!mySQLDatabase.connect()) {
-            getLogger().severe("MySQLデータベースへの接続に失敗しました。");
-        }
-        try {
-            pointsDatabase.openConnection(getDataFolder().getAbsolutePath());
-        } catch (SQLException e) {
-            getLogger().severe("SQLiteデータベース接続時にエラーが発生しました: " + e.getMessage());
-
-            return;
-        }
-        try {
-            pointsDatabase.saveData(blockCount, placedBlocks);
-        } catch (SQLException e) {
-            getLogger().severe("§aデータベースへの保存中にエラーが発生しました。" + e.getMessage());
-        }
-
-
         useToolMoney = getConfig().getBoolean("use-tool-money", false);
 
         // ツール報酬をロード
@@ -479,8 +448,12 @@ public class Digger extends JavaPlugin implements Listener {
     }
     @Override
     public void onDisable() {
-        if (mySQLDatabase != null && mySQLDatabase.isConnected()) {
-            saveData();
+        try {
+            if (mySQLDatabase != null && mySQLDatabase.isConnected()) {
+                saveData();
+            }
+        } catch (Exception e) {
+            getLogger().severe("データの保存中にエラーが発生しました: " + e.getMessage());
         }
         saveData();
         getConfig().set("update-interval", scoreboardUpdateInterval);
