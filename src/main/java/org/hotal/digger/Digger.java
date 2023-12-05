@@ -61,15 +61,19 @@ public class Digger extends JavaPlugin implements Listener {
 
     private Scoreboard scoreboard;
     private Economy economy;
-    private long scoreboardUpdateInterval = 20L;
+    private long scoreboardUpdateInterval = 40L;
     private Objective objective;
     private final Map<Material, Integer> rewardMap = new HashMap<>();
     public final Map<UUID, PlayerData> blockCount = new HashMap<>();
+
 
     private final List<Location> placedBlocks = new ArrayList<>();
     private List<String> worldBlacklist = new ArrayList<>();
     private Material toolType;
     private Connection connection;
+    private String url;
+    private String user;
+    private String password;
 
 
     public Digger() {
@@ -93,28 +97,33 @@ public class Digger extends JavaPlugin implements Listener {
         Properties prop = new Properties();
 
         // config.properties ファイルの処理
-        // config.properties ファイルのパスを修正
         File configFile = new File(getDataFolder(), "config.properties");
         if (!configFile.exists()) {
-            getLogger().severe("config.properties ファイルが見つかりません。");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
+            try {
+                configFile.getParentFile().mkdirs();
+                configFile.createNewFile();
+                // デフォルト設定を書き込む（必要に応じて設定値を追加）
+                prop.setProperty("db.url", "jdbc:mysql://localhost:3306/yourdatabase");
+                prop.setProperty("db.user", "username");
+                prop.setProperty("db.password", "password");
+                prop.store(new FileWriter(configFile), "Database Configurations");
+            } catch (IOException e) {
+                getLogger().severe("config.properties ファイルの生成に失敗しました: " + e.getMessage());
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
         }
 
-        prop = new Properties();
         try {
             prop.load(new FileInputStream(configFile));
             mySQLDatabase = new MySQLDatabase(prop);
-            // ...（他の初期化コード）
         } catch (IOException e) {
             getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-
         // MySQLDatabase の初期化
-        mySQLDatabase = new MySQLDatabase(prop);
         if (!mySQLDatabase.connect()) {
             getLogger().severe("MySQLデータベースへの接続に失敗しました。");
         }
@@ -126,6 +135,9 @@ public class Digger extends JavaPlugin implements Listener {
         } catch (SQLException e) {
             getLogger().severe("SQLiteデータベースの初期化に失敗しました: " + e.getMessage());
         }
+
+        // その他の初期化処理...
+
         startScoreboardUpdater();
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
 
@@ -135,6 +147,8 @@ public class Digger extends JavaPlugin implements Listener {
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
         getCommand("sb").setExecutor(commandExecutor);
+        getCommand("setprobability").setExecutor(commandExecutor);
+        getCommand("sutm").setExecutor(commandExecutor);
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
         useToolMoney = getConfig().getBoolean("use-tool-money", false);
@@ -198,7 +212,7 @@ public class Digger extends JavaPlugin implements Listener {
                 loadData(); // player-data.ymlの中身を読み込む。
 
             }
-        }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+        }.runTaskLater(this, 40L); //2秒遅延（20tick=1秒）
 
 
         }
@@ -249,7 +263,6 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             getLogger().warning("§4エラー：Vaultプラグインが見つかりませんでした。");
@@ -275,28 +288,73 @@ public class Digger extends JavaPlugin implements Listener {
             public void run() {
                 updateAllPlayersScoreboard();
             }
-        }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
+        }.runTaskTimer(this, 40L, scoreboardUpdateInterval);  // 開始は2秒後、その後は指定された間隔で更新
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        // デバッグメッセージの追加
         if (!(sender instanceof Player)) {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
+
         Player player = (Player) sender;
+
+        if (cmd.getName().equalsIgnoreCase("setprobability")) {
+            if (!player.hasPermission("digger.setprobability")) {
+                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                return true;
+            }
+            double newProbability;
+            if (args.length == 0) {
+                player.sendMessage("§c 確率を指定してください。例: /digger:setprobability 0.5");
+                return true;
+            }
+            try {
+                newProbability = Double.parseDouble(args[0]);
+            } catch (NumberFormatException e) {
+                player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
+                return true;
+            }
+
+            if (newProbability >= 0.0 && newProbability <= 1.0) {
+                Digger.rewardProbability = newProbability;
+                this.getConfig().set("rewardProbability", newProbability);
+                this.saveConfig();
+                player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
+                return true;
+            }
+
+        } else if (cmd.getName().equalsIgnoreCase("reload")) {
+            if (cmd.getName().equalsIgnoreCase("reload")) {
+                if (!player.hasPermission("digger.reload")) {
+                    player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
+                    return true;
+                }
+
+                this.reloadConfig();
+                Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02);
+                player.sendMessage("§a config.ymlを再読み込みしました。");
+                return true;
+            }
+            return true;
+        }
+        // コマンドが'digger:scoreboard'であるかを確認
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみが実行できます。");
+            return true;
+        }
         // コマンドが'digger:scoreboard'であるかを確認
         if (cmd.getName().equalsIgnoreCase("sb")) {
             // 引数が'on'または'off'であるかを確認
             if (args.length == 1) {
                 if (args[0].equalsIgnoreCase("on")) {
-                    getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));    // スコアボードをオンにする
+                    // スコアボードをオンにする
                     scoreboardToggles.put(player.getUniqueId(), true);
                     updateScoreboard(player); // これはあなたのスコアボードを更新するメソッドです
                     player.sendMessage(ChatColor.GREEN + "スコアボードを表示しました。");
                 } else if (args[0].equalsIgnoreCase("off")) {
-                    getLogger().info("Command executed: " + cmd.getName() + " with args: " + Arrays.toString(args));   // スコアボードをオフにする
+                    // スコアボードをオフにする
                     scoreboardToggles.put(player.getUniqueId(), false);
                     player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
                     player.sendMessage(ChatColor.GREEN + "スコアボードを非表示にしました。");
@@ -306,8 +364,82 @@ public class Digger extends JavaPlugin implements Listener {
                 return true;
             }
         }
+        if (cmd.getName().equalsIgnoreCase("sutm")) {
+            if (!(sender.hasPermission("digger.sutm"))) {
+                sender.sendMessage(ChatColor.RED + "このコマンドを実行する権限がありません。");
+                return true;
+            }
+            if (args.length != 1) {
+                sender.sendMessage(ChatColor.RED + "使用法: /sutm <true/false>");
+                return true;
+            }
+            boolean newSetting = Boolean.parseBoolean(args[0]);
+            isToolRewardEnabled = newSetting;
+            useToolMoney = newSetting;
+            getConfig().set("use-tool-money", newSetting);
+            saveConfig();
+            sender.sendMessage(ChatColor.GREEN + "ツール報酬の使用が " + newSetting + " に設定されました。");
+            return true;
+        }
 
         return false;
+    }
+    public void updateScoreboard (Player viewingPlayer){
+
+        Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
+        if (showScoreboard) {
+
+            // スコアボードのセットアップ
+            Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN+ "整地の順位");
+            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+            // 空行
+            objective.getScore(" ").setScore(1);
+
+            // ソートされたリストを取得
+            List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
+                    .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
+                    .limit(10)
+                    .collect(Collectors.toList());
+
+
+            // プレイヤーのランクを決定
+            PlayerData defaultData = new PlayerData("", 0);
+            PlayerData playerData = blockCount.getOrDefault(viewingPlayer.getUniqueId(), defaultData);
+            int viewerScore = playerData.getBlocksMined();
+            int viewerRankIndex = sortedList.stream()
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList())
+                    .indexOf(viewingPlayer.getUniqueId());
+            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex >= 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
+
+            // トップ10プレイヤーをスコアボードに表示
+            for (int i = 0; i < sortedList.size(); i++) {
+                Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
+                String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
+                objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
+            }
+
+            // 空行
+            objective.getScore(" ").setScore(1);
+
+            objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
+            objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
+            // プレイヤーの座標を表示
+            Location location = viewingPlayer.getLocation();
+            String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
+                    "X:" + location.getBlockX() +
+                    " Y:" + location.getBlockY() +
+                    " Z:" + location.getBlockZ();
+            objective.getScore(locationDisplay).setScore(-2);
+
+
+
+            // スコアボードをプレイヤーに適用
+            viewingPlayer.setScoreboard(scoreboard);
+        }
     }
 
 
@@ -402,56 +534,7 @@ public class Digger extends JavaPlugin implements Listener {
         }
     }
 
-    public void updateScoreboard(Player viewingPlayer) {
-        getLogger().info("Updating scoreboard for player: " + viewingPlayer.getName());
-        Boolean showScoreboard = scoreboardToggles.getOrDefault(viewingPlayer.getUniqueId(), true);
-        if (showScoreboard) {
-            // スコアボードのセットアップ
-            Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN+ "整地の順位");
-            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-            // ソートされたリストを取得
-            List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
-                    .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
-                    .limit(10)
-                    .collect(Collectors.toList());
-
-            // プレイヤーのランクを決定
-            int viewerScore = blockCount.getOrDefault(viewingPlayer.getUniqueId(), new PlayerData("", 0)).getBlocksMined();
-            int viewerRankIndex = sortedList.stream()
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList())
-                    .indexOf(viewingPlayer.getUniqueId());
-            String rankDisplayText = viewerRankIndex < 0 || viewerRankIndex >= 10 ? "ランキング外" : (viewerRankIndex + 1) + "位";
-
-
-            // トップ10プレイヤーをスコアボードに表示
-            for (int i = 0; i < sortedList.size(); i++) {
-                Map.Entry<UUID, PlayerData> entry = sortedList.get(i);
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(entry.getKey());
-                String listedPlayerName = offlinePlayer.getName() == null ? "Unknown" : offlinePlayer.getName();
-                objective.getScore(listedPlayerName).setScore(entry.getValue().getBlocksMined());
-            }
-
-                 // 空行
-            objective.getScore(" ").setScore(1);
-            objective.getScore(ChatColor.GOLD + "あなたの順位: " + rankDisplayText).setScore(0);
-            objective.getScore(ChatColor.GREEN + "掘ったブロック数: " + ChatColor.WHITE + viewerScore + "ブロック").setScore(-1);
-            // プレイヤーの座標を表示
-            Location location = viewingPlayer.getLocation();
-            String locationDisplay = ChatColor.WHITE + "座標: " + ChatColor.RED +
-                    "X:" + location.getBlockX() +
-                    " Y:" + location.getBlockY() +
-                    " Z:" + location.getBlockZ();
-            objective.getScore(locationDisplay).setScore(-2);
-
-            // スコアボードをプレイヤーに適用
-            viewingPlayer.setScoreboard(scoreboard);
-        } else {
-        getLogger().info("Scoreboard is toggled off for player: " + viewingPlayer.getName());
-    }
-    }
     @Override
     public void onDisable() {
         try {
@@ -646,9 +729,15 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
     public Connection getConnection() {
-        Connection connection = null;
-        return connection;
+        try {
+            return DriverManager.getConnection(url, user, password);
+        } catch (SQLException e) {
+            getLogger().severe("データベース接続に失敗しました: " + e.getMessage());
+            return null;
+        }
     }
+
+
 
     public void setConnection(Connection connection) {
         this.connection = connection;
