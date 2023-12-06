@@ -33,11 +33,8 @@ public class Commands implements CommandExecutor {
             sender.sendMessage("§c このコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
-
         Player player = (Player) sender;
         String cmdName = command.getName();
-
-
         if (cmdName.equalsIgnoreCase("reload")) {
             if (!player.hasPermission("digger.reload")) {
                 player.sendMessage("§c あなたにはこのコマンドを実行する権限がありません。");
@@ -54,7 +51,6 @@ public class Commands implements CommandExecutor {
                     player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
                     return true;
                 }
-
                 // コマンドが 'set' の場合に適切な引数が提供されているかをチェック
                 if (args.length == 2) {
                     String playerName = args[0];
@@ -65,8 +61,6 @@ public class Commands implements CommandExecutor {
                             player.sendMessage("§c指定されたプレイヤーが見つかりません。");
                             return true;
                         }
-
-
                         UUID targetUUID = targetPlayer.getUniqueId();
                         // PlayerData オブジェクトを取得または作成
                         Digger.PlayerData playerData = plugin.blockCount.getOrDefault(targetUUID, new Digger.PlayerData(targetPlayer.getName(), 0));
@@ -86,7 +80,6 @@ public class Commands implements CommandExecutor {
         }
         return false;
     }
-
 }
 
 
