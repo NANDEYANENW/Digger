@@ -455,9 +455,9 @@ public class Digger extends JavaPlugin implements Listener {
 
 
     public void updateAllPlayersScoreboard() {
-        getLogger().info("Updating scoreboard for all players");
+
         for (Player player : Bukkit.getOnlinePlayers()) {
-            getLogger().info("Updating scoreboard for player: " + player.getName());
+
             updateScoreboard(player);
         }
     }
