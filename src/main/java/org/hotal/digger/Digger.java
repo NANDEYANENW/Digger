@@ -146,9 +146,6 @@ public class Digger extends JavaPlugin implements Listener {
 
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
-        getCommand("sb").setExecutor(commandExecutor);
-        getCommand("setprobability").setExecutor(commandExecutor);
-        getCommand("sutm").setExecutor(commandExecutor);
         if (this.getConfig().contains("scoreboardUpdateInterval")) {
             scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
         useToolMoney = getConfig().getBoolean("use-tool-money", false);
@@ -297,35 +294,9 @@ public class Digger extends JavaPlugin implements Listener {
             sender.sendMessage("§cこのコマンドはプレイヤーからのみ実行できます。");
             return true;
         }
-
         Player player = (Player) sender;
 
-        if (cmd.getName().equalsIgnoreCase("setprobability")) {
-            if (!player.hasPermission("digger.setprobability")) {
-                player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
-                return true;
-            }
-            double newProbability;
-            if (args.length == 0) {
-                player.sendMessage("§c 確率を指定してください。例: /digger:setprobability 0.5");
-                return true;
-            }
-            try {
-                newProbability = Double.parseDouble(args[0]);
-            } catch (NumberFormatException e) {
-                player.sendMessage("§c不正な確率の形式です。0.0から1.0の間の数値を指定してください。");
-                return true;
-            }
-
-            if (newProbability >= 0.0 && newProbability <= 1.0) {
-                Digger.rewardProbability = newProbability;
-                this.getConfig().set("rewardProbability", newProbability);
-                this.saveConfig();
-                player.sendMessage("§a確率を更新しました: " + Digger.rewardProbability);
-                return true;
-            }
-
-        } else if (cmd.getName().equalsIgnoreCase("reload")) {
+             if (cmd.getName().equalsIgnoreCase("reload")) {
             if (cmd.getName().equalsIgnoreCase("reload")) {
                 if (!player.hasPermission("digger.reload")) {
                     player.sendMessage("§cあなたにはこのコマンドを実行する権限がありません。");
@@ -339,49 +310,6 @@ public class Digger extends JavaPlugin implements Listener {
             }
             return true;
         }
-        // コマンドが'digger:scoreboard'であるかを確認
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみが実行できます。");
-            return true;
-        }
-        // コマンドが'digger:scoreboard'であるかを確認
-        if (cmd.getName().equalsIgnoreCase("sb")) {
-            // 引数が'on'または'off'であるかを確認
-            if (args.length == 1) {
-                if (args[0].equalsIgnoreCase("on")) {
-                    // スコアボードをオンにする
-                    scoreboardToggles.put(player.getUniqueId(), true);
-                    updateScoreboard(player); // これはあなたのスコアボードを更新するメソッドです
-                    player.sendMessage(ChatColor.GREEN + "スコアボードを表示しました。");
-                } else if (args[0].equalsIgnoreCase("off")) {
-                    // スコアボードをオフにする
-                    scoreboardToggles.put(player.getUniqueId(), false);
-                    player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-                    player.sendMessage(ChatColor.GREEN + "スコアボードを非表示にしました。");
-                } else {
-                    player.sendMessage(ChatColor.RED + "無効な引数です。使用法: /digger:scoreboard <on/off>");
-                }
-                return true;
-            }
-        }
-        if (cmd.getName().equalsIgnoreCase("sutm")) {
-            if (!(sender.hasPermission("digger.sutm"))) {
-                sender.sendMessage(ChatColor.RED + "このコマンドを実行する権限がありません。");
-                return true;
-            }
-            if (args.length != 1) {
-                sender.sendMessage(ChatColor.RED + "使用法: /sutm <true/false>");
-                return true;
-            }
-            boolean newSetting = Boolean.parseBoolean(args[0]);
-            isToolRewardEnabled = newSetting;
-            useToolMoney = newSetting;
-            getConfig().set("use-tool-money", newSetting);
-            saveConfig();
-            sender.sendMessage(ChatColor.GREEN + "ツール報酬の使用が " + newSetting + " に設定されました。");
-            return true;
-        }
-
         return false;
     }
     public void updateScoreboard (Player viewingPlayer){
