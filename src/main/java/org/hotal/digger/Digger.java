@@ -116,7 +116,7 @@ public class Digger extends JavaPlugin implements Listener {
 
         try {
             prop.load(new FileInputStream(configFile));
-            mySQLDatabase = new MySQLDatabase(prop);
+            mySQLDatabase = new MySQLDatabase();
         } catch (IOException e) {
             getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);

@@ -1,31 +1,47 @@
 package org.hotal.digger.mysql;
 
 
-import org.bukkit.Location;
 import org.hotal.digger.Digger;
-
-
+import org.bukkit.Location;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+
 public class MySQLDatabase {
 
     private String url;
     private String user;
     private String password;
 
-    public MySQLDatabase(Properties prop) {
-        this.url = prop.getProperty("db.url");
-        this.user = prop.getProperty("db.user");
-        this.password = prop.getProperty("db.password");
+    // 引数なしのコンストラクタ
+    public MySQLDatabase() {
+        Properties prop = new Properties();
+        try {
+            // Diggerインスタンスからconfig.propertiesファイルのパスを取得
+            prop.load(new FileInputStream(Digger.getInstance().getDataFolder().getAbsolutePath() + "/config.properties"));
+            this.url = prop.getProperty("db.url");
+            this.user = prop.getProperty("db.user");
+            this.password = prop.getProperty("db.password");
+        } catch (IOException e) {
+            e.printStackTrace();
+            // エラーハンドリング...
+        }
     }
 
 
     private Connection getConnection() throws SQLException {
-            // データベースへの接続を確立
-            return DriverManager.getConnection(url, user, password);
-        }
+        // MySQLデータベースへの接続
+        String fullUrl = url + "?createDatabaseIfNotExist=true";
+        return DriverManager.getConnection(fullUrl, user, password);
+    }
 
-
+    private Connection getSQLiteConnection() throws SQLException {
+        // プラグインのデータフォルダ内にデータベースファイルを保存する
+        String fullUrl = url + "?createDatabaseIfNotExist=true";
+        String sqliteUrl = "jdbc:sqlite:" + Digger.getInstance().getDataFolder().getAbsolutePath() + "/Database.db";
+        return DriverManager.getConnection(sqliteUrl);
+    }
 
 
 
@@ -112,7 +128,7 @@ public class MySQLDatabase {
         return dataMap;
     }
 
-    public void savePlacedBlock(UUID playerId, Location loc) {
+    public void savePlacedBlock(UUID playerName, Location loc) {
         String insertQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";
 
         try (Connection conn = getSQLiteConnection(); // SQLiteデータベースへの接続を取得
@@ -129,9 +145,8 @@ public class MySQLDatabase {
         }
     }
 
-    private Connection getSQLiteConnection() {
-        return null;
-    }
+
+
 }
 
 
