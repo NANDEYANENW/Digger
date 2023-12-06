@@ -13,8 +13,7 @@ public class MySQLDatabase {
     private String user;
     private String password;
 
-    public MySQLDatabase() {
-        Properties prop = new Properties();
+    public MySQLDatabase(Properties prop) {
         try {
             prop.load(new FileInputStream(Digger.getInstance().getDataFolder().getAbsolutePath() + "/config.properties"));
             this.url = prop.getProperty("db.url");
@@ -32,14 +31,14 @@ public class MySQLDatabase {
              Statement stmt = conn.createStatement()) {
             // player_data テーブルの作成
             String playerDataTable = "CREATE TABLE IF NOT EXISTS player_data ("
-                    + "UUID VARCHAR(255) PRIMARY KEY,"
+                    + "UUID CHAR(36) PRIMARY KEY,"
                     + "PlayerName VARCHAR(255),"
                     + "BlocksMined INT);";
             stmt.execute(playerDataTable);
 
             // placed_blocks テーブルの作成
             String placedBlocksTable = "CREATE TABLE IF NOT EXISTS placed_blocks ("
-                    + "UUID VARCHAR(255),"
+                    + "UUID CHAR(36),"
                     + "World VARCHAR(255),"
                     + "X INT,"
                     + "Y INT,"
@@ -133,10 +132,10 @@ public class MySQLDatabase {
 
     public Map<UUID, Digger.PlayerData> loadData() {
         Map<UUID, Digger.PlayerData> dataMap = new HashMap<>();
-
+        String query = "SELECT * FROM digger.player_data;"; // SQLクエリ
 
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(url);
+             PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -147,10 +146,11 @@ public class MySQLDatabase {
                 dataMap.put(uuid, new Digger.PlayerData(playerName, blocksMined));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            e.printStackTrace(); // エラーログを出力
+                    }
         return dataMap;
     }
+
 
     public void savePlacedBlock(UUID playerName, Location loc) {
         String insertQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";

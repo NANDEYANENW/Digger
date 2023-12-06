@@ -61,7 +61,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     private Scoreboard scoreboard;
     private Economy economy;
-    private long scoreboardUpdateInterval = 40L;
+    private long scoreboardUpdateInterval = 20L;
     private Objective objective;
     private final Map<Material, Integer> rewardMap = new HashMap<>();
     public final Map<UUID, PlayerData> blockCount = new HashMap<>();
@@ -116,13 +116,15 @@ public class Digger extends JavaPlugin implements Listener {
 
         try {
             prop.load(new FileInputStream(configFile));
-            mySQLDatabase = new MySQLDatabase();
+            // MySQLDatabase インスタンスの初期化
+            mySQLDatabase = new MySQLDatabase(prop);
+            if (!mySQLDatabase.connect()) {
+                getLogger().severe("MySQLデータベースへの接続に失敗しました。");
+            }
         } catch (IOException e) {
             getLogger().severe("config.properties ファイルの読み込みに失敗しました: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
-            return;
         }
-
         // MySQLDatabase の初期化
         if (!mySQLDatabase.connect()) {
             getLogger().severe("MySQLデータベースへの接続に失敗しました。");
@@ -136,9 +138,9 @@ public class Digger extends JavaPlugin implements Listener {
             getLogger().severe("SQLiteデータベースの初期化に失敗しました: " + e.getMessage());
         }
 
-        // その他の初期化処理...
 
-        startScoreboardUpdater();
+
+
         Digger.rewardProbability = this.getConfig().getDouble("rewardProbability", 0.02); //2%
 
         ToolMoney toolMoneyInstance = new ToolMoney(getConfig(), this);
@@ -146,13 +148,26 @@ public class Digger extends JavaPlugin implements Listener {
 
         getCommand("reload").setExecutor(commandExecutor);
         getCommand("set").setExecutor(commandExecutor);
-        if (this.getConfig().contains("scoreboardUpdateInterval")) {
-            scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
-        useToolMoney = getConfig().getBoolean("use-tool-money", false);
+        startScoreboardUpdater();
+            if (this.getConfig().contains("scoreboardUpdateInterval")) {
+                scoreboardUpdateInterval = this.getConfig().getLong("scoreboardUpdateInterval");
+                useToolMoney = getConfig().getBoolean("use-tool-money", false);
+               new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        // スコアボードの初期化
+                        scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                        objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
+                        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                        loadData(); // player-data.ymlの中身を読み込む。
 
-        // ツール報酬をロード
+                    }
+                }.runTaskLater(this, 20L); //1秒遅延（20tick=1秒）
+
+
+            }
+
         loadToolRewards();
-
         rewardMap.put(Material.NETHERITE_PICKAXE, 250);
         rewardMap.put(Material.NETHERITE_SHOVEL, 250);
         rewardMap.put(Material.DIAMOND_PICKAXE, 200);
@@ -199,22 +214,11 @@ public class Digger extends JavaPlugin implements Listener {
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                // スコアボードの初期化
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-                objective = scoreboard.registerNewObjective("整地の順位", "dummy", "あなたの順位");
-                objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-                loadData(); // player-data.ymlの中身を読み込む。
-
-            }
-        }.runTaskLater(this, 40L); //2秒遅延（20tick=1秒）
 
 
-        }
 
     }
+
 
     // データの保存
     public void savePlayerData(Map<UUID, Integer> blockCount) {
@@ -285,7 +289,7 @@ public class Digger extends JavaPlugin implements Listener {
             public void run() {
                 updateAllPlayersScoreboard();
             }
-        }.runTaskTimer(this, 40L, scoreboardUpdateInterval);  // 開始は2秒後、その後は指定された間隔で更新
+        }.runTaskTimer(this, 20L, scoreboardUpdateInterval);  // 開始は1秒後、その後は指定された間隔で更新
     }
 
     @Override
@@ -319,17 +323,25 @@ public class Digger extends JavaPlugin implements Listener {
 
             // スコアボードのセットアップ
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN+ "整地の順位");
+            Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN + "整地の順位");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-            // 空行
-            objective.getScore(" ").setScore(1);
+// デバッグ：blockCountの内容を確認
+            blockCount.forEach((uuid, data) -> getLogger().info("Player: " + uuid + ", Blocks Mined: " + data.getBlocksMined()));
 
-            // ソートされたリストを取得
+// ソートされたリストを取得
             List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
                     .sorted((entry1, entry2) -> Integer.compare(entry2.getValue().getBlocksMined(), entry1.getValue().getBlocksMined()))
                     .limit(10)
                     .collect(Collectors.toList());
+
+// デバッグ：ソートされたリストの内容を確認
+            sortedList.forEach(entry -> getLogger().info("Sorted Player: " + entry.getKey() + ", Blocks Mined: " + entry.getValue().getBlocksMined()));
+
+            // 空行
+            objective.getScore(" ").setScore(1);
+
+
 
 
             // プレイヤーのランクを決定
@@ -379,7 +391,6 @@ public class Digger extends JavaPlugin implements Listener {
             Player player = event.getPlayer();
             UUID playerId = player.getUniqueId();
             Location loc = event.getBlock().getLocation();
-
             placedBlocksWithUUID.put(loc, playerId);
     }
 
