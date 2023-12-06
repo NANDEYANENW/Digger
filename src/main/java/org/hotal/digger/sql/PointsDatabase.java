@@ -27,7 +27,7 @@ public class PointsDatabase {
             statement.execute(playerDataTableCreationQuery);
 
             String placedBlocksTableCreationQuery = "CREATE TABLE IF NOT EXISTS placed_blocks ("
-                    + "BlockID INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "UUID INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "World VARCHAR(255),"
                     + "X INT,"
                     + "Y INT,"

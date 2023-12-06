@@ -362,9 +362,6 @@ public class Digger extends JavaPlugin implements Listener {
                     " Y:" + location.getBlockY() +
                     " Z:" + location.getBlockZ();
             objective.getScore(locationDisplay).setScore(-2);
-
-
-
             // スコアボードをプレイヤーに適用
             viewingPlayer.setScoreboard(scoreboard);
         }
@@ -393,8 +390,6 @@ public class Digger extends JavaPlugin implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         World world = player.getWorld();
-        getLogger().info("Block broken by player: " + player.getName()); // デバッグログ
-
         if (worldBlacklist.contains(world.getName()) ||
                 placedBlocks.remove(event.getBlock().getLocation()) ||
                 isBlockBlacklisted(event.getBlock().getType())) {
@@ -420,10 +415,8 @@ public class Digger extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-
             saveData();
             loadData();
-
     }
 
     public void updateBlockCount(Player player) {
@@ -432,7 +425,6 @@ public class Digger extends JavaPlugin implements Listener {
         int before = data.getBlocksMined(); // 更新前のカウント
         data.setBlocksMined(data.getBlocksMined() + 1);
         blockCount.put(playerID, data);
-        getLogger().info("Blocks mined by " + player.getName() + ": " + before + " -> " + data.getBlocksMined()); // デバッグログ
     }
 
 
@@ -454,10 +446,9 @@ public class Digger extends JavaPlugin implements Listener {
     }
 
 
-    public void updateAllPlayersScoreboard() {
-
+    public void updateAllPlayersScoreboard () {
+        // すべてのプレイヤー（オンライン・オフライン）のUUIDを使用してスコアボードを更新
         for (Player player : Bukkit.getOnlinePlayers()) {
-
             updateScoreboard(player);
         }
     }

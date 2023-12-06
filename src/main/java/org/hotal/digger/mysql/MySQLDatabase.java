@@ -9,26 +9,48 @@ import java.sql.*;
 import java.util.*;
 
 public class MySQLDatabase {
-
     private String url;
     private String user;
     private String password;
 
-    // 引数なしのコンストラクタ
     public MySQLDatabase() {
         Properties prop = new Properties();
         try {
-            // Diggerインスタンスからconfig.propertiesファイルのパスを取得
             prop.load(new FileInputStream(Digger.getInstance().getDataFolder().getAbsolutePath() + "/config.properties"));
             this.url = prop.getProperty("db.url");
             this.user = prop.getProperty("db.user");
             this.password = prop.getProperty("db.password");
+            initializeDatabase();
         } catch (IOException e) {
             e.printStackTrace();
             // エラーハンドリング...
         }
     }
 
+    private void initializeDatabase() {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            // player_data テーブルの作成
+            String playerDataTable = "CREATE TABLE IF NOT EXISTS player_data ("
+                    + "UUID VARCHAR(255) PRIMARY KEY,"
+                    + "PlayerName VARCHAR(255),"
+                    + "BlocksMined INT);";
+            stmt.execute(playerDataTable);
+
+            // placed_blocks テーブルの作成
+            String placedBlocksTable = "CREATE TABLE IF NOT EXISTS placed_blocks ("
+                    + "UUID VARCHAR(255),"
+                    + "World VARCHAR(255),"
+                    + "X INT,"
+                    + "Y INT,"
+                    + "Z INT,"
+                    + "FOREIGN KEY(UUID) REFERENCES player_data(UUID));";
+            stmt.execute(placedBlocksTable);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // エラーハンドリング...
+        }
+    }
 
     private Connection getConnection() throws SQLException {
         // MySQLデータベースへの接続
@@ -36,12 +58,14 @@ public class MySQLDatabase {
         return DriverManager.getConnection(fullUrl, user, password);
     }
 
+
     private Connection getSQLiteConnection() throws SQLException {
         // プラグインのデータフォルダ内にデータベースファイルを保存する
         String fullUrl = url + "?createDatabaseIfNotExist=true";
         String sqliteUrl = "jdbc:sqlite:" + Digger.getInstance().getDataFolder().getAbsolutePath() + "/Database.db";
         return DriverManager.getConnection(sqliteUrl);
     }
+
 
 
 

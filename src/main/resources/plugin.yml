@@ -6,31 +6,16 @@ load: STARTUP
 depend:
   - Vault
 commands:
-  setprobability:
-    description: 確率を変更します（OP用）。
-    usage: /setprobability
   reload:
     description: 設定を再読み込みします。
     usage: /reload
   set:
     description: プレイヤー別に強制的に掘ったブロックを設定します。
     usage: /set
-  sb:
-    description: スコアボードを表示、非表示にします。
-    usage: /sb <on/off>
-  sutm:
-    description: config.ymlのuse-tool-moneyの有効/無効を強制的に切り替えます。
-    usage: /sutm <true/false>
-permissions:
-  digger.setprobability:
-    description: 確率を変更します。（OP限定）。
-    default: op
+  permissions:
   digger.reload:
     description: 設定を再読み込みします。
     default: op
   digger.set:
     description: プレイヤー別に強制的に掘ったブロックを設定します。
-    default: op
-  digger.sutm:
-    description: config.ymlのuse-tool-moneyの有効/無効を強制的に切り替えます。
     default: op
