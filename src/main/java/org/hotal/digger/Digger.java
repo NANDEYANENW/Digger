@@ -326,8 +326,7 @@ public class Digger extends JavaPlugin implements Listener {
             Objective objective = scoreboard.registerNewObjective("stats", "dummy", ChatColor.GREEN + "整地の順位");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-// デバッグ：blockCountの内容を確認
-            blockCount.forEach((uuid, data) -> getLogger().info("Player: " + uuid + ", Blocks Mined: " + data.getBlocksMined()));
+
 
 // ソートされたリストを取得
             List<Map.Entry<UUID, PlayerData>> sortedList = blockCount.entrySet().stream()
@@ -335,8 +334,6 @@ public class Digger extends JavaPlugin implements Listener {
                     .limit(10)
                     .collect(Collectors.toList());
 
-// デバッグ：ソートされたリストの内容を確認
-            sortedList.forEach(entry -> getLogger().info("Sorted Player: " + entry.getKey() + ", Blocks Mined: " + entry.getValue().getBlocksMined()));
 
             // 空行
             objective.getScore(" ").setScore(1);
