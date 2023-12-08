@@ -30,14 +30,14 @@ public class MySQLDatabase {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             // player_data テーブルの作成
-            String playerDataTable = "CREATE TABLE IF NOT EXISTS player_data ("
+            String playerDataTable = "CREATE TABLE IF NOT EXISTS digger_player_data ("
                     + "UUID CHAR(36) PRIMARY KEY,"
                     + "PlayerName VARCHAR(255),"
                     + "BlocksMined INT);";
             stmt.execute(playerDataTable);
 
             // placed_blocks テーブルの作成
-            String placedBlocksTable = "CREATE TABLE IF NOT EXISTS placed_blocks ("
+            String placedBlocksTable = "CREATE TABLE IF NOT EXISTS digger_placed_blocks ("
                     + "UUID CHAR(36),"
                     + "World VARCHAR(255),"
                     + "X INT,"
@@ -71,7 +71,7 @@ public class MySQLDatabase {
 
     public void savePlayerData(Map<UUID, Digger.PlayerData> blockCount, List<Location> placedBlocks, Map<Location, UUID> placedBlocksWithUUID) {
         // プレイヤーデータの保存
-        String playerDataQuery = "INSERT INTO player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
+        String playerDataQuery = "INSERT INTO digger_player_data (UUID, PlayerName, BlocksMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE BlocksMined = ?;";
         for (Map.Entry<UUID, Digger.PlayerData> entry : blockCount.entrySet()) {
             UUID playerId = entry.getKey();
             Digger.PlayerData playerData = entry.getValue();
@@ -89,9 +89,9 @@ public class MySQLDatabase {
                 e.printStackTrace();
             }
         }
-// placedBlocks の保存
+
         // placedBlocks の保存
-        String placedBlocksQuery = "INSERT INTO placed_blocks (UUID, World, X, Y, Z) VALUES (?, ?, ?, ?, ?);";
+        String placedBlocksQuery = "INSERT INTO digger_placed_blocks (UUID, World, X, Y, Z) VALUES (?, ?, ?, ?, ?);";
 
         for (Location loc : placedBlocks) {
             try (Connection conn = getConnection();
@@ -132,7 +132,7 @@ public class MySQLDatabase {
 
     public Map<UUID, Digger.PlayerData> loadData() {
         Map<UUID, Digger.PlayerData> dataMap = new HashMap<>();
-        String query = "SELECT * FROM digger.player_data;"; // SQLクエリ
+        String query = "SELECT * FROM digger_player_data;"; // SQLクエリ
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -153,7 +153,7 @@ public class MySQLDatabase {
 
 
     public void savePlacedBlock(UUID playerName, Location loc) {
-        String insertQuery = "INSERT INTO placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";
+        String insertQuery = "INSERT INTO digger_placed_blocks (World, X, Y, Z) VALUES (?, ?, ?, ?);";
 
         try (Connection conn = getSQLiteConnection(); // SQLiteデータベースへの接続を取得
              PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
@@ -168,8 +168,6 @@ public class MySQLDatabase {
             e.printStackTrace();
         }
     }
-
-
 
 }
 
