@@ -93,6 +93,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        getLogger().info("[ほたまち]整地プラグインを起動しています。データのロード中です。");
         saveDefaultConfig();
         Properties prop = new Properties();
 
@@ -464,6 +465,7 @@ public class Digger extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        getLogger().info("[ほたまち]整地プラグインを終了しています。データ保存をしていますのでサーバーを強制終了しないでください。");
         try {
             if (mySQLDatabase != null && mySQLDatabase.isConnected()) {
                 saveData();

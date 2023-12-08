@@ -3,6 +3,8 @@ version: '${project.version}'
 main: org.hotal.digger.Digger
 api-version: '1.20'
 load: STARTUP
+author: ほたまちスバル
+description: copyright 2023 NANDEYANEN エンジニア部 & ほたまちスバル
 depend:
   - Vault
 commands:
