@@ -43,7 +43,7 @@ public class MySQLDatabase {
                     + "X INT,"
                     + "Y INT,"
                     + "Z INT,"
-                    + "FOREIGN KEY(UUID) REFERENCES player_data(UUID));";
+                    + "FOREIGN KEY(UUID) REFERENCES digger_player_data(UUID));";
             stmt.execute(placedBlocksTable);
         } catch (SQLException e) {
             e.printStackTrace();
